@@ -29,7 +29,8 @@ check_pro.rc
 cpru866m.c
 cpru1251m.c
 check_pro.prg
-prog_menu.prg
 Errorsys.prg
+.\MENU\prog_menu.prg
 .\SYSTEM\system.prg
 .\CRE_PAS\cre_pas.prg
+.\DICTIONARY\dictionary.prg

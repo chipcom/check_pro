@@ -3,7 +3,7 @@
 #include 'common.ch'
 #include 'function.ch'
 #include 'edit_spr.ch'
-#include 'chip_mo.ch'
+#include '.\check_pro.ch'
 #include 'tbox.ch'
 
 // 24.07.23

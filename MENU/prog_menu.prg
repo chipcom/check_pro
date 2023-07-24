@@ -3,13 +3,12 @@
 #include 'common.ch'
 #include 'function.ch'
 #include 'edit_spr.ch'
-#include 'chip_mo.ch'
+#include '.\check_pro.ch'
 
 // 23.07.23
 Function prog_menu(n_Task)
   Local it, s, k, fl := .t., cNameIcon
   
-  glob_task := n_Task
   sys_date := DATE()
   c4sys_date := dtoc4(sys_date)
   blk_ekran := {|| devpos(maxrow() - 2, maxcol() - len(dir_server())), ;
@@ -24,8 +23,7 @@ Function prog_menu(n_Task)
   SETCOLOR(color1)
   FillScreen(p_char_screen, p_color_screen)
   do case
-    case glob_task == X_REGIST //
-      // fl := begin_task_regist()
+    case n_task == X_PASSWORD
       aadd(cmain_menu, 1)
       aadd(main_menu,' ~Пароли ')
       aadd(main_message,'Процедура отмены регистрации электронных документов в задаче CHIP_MO')
@@ -76,25 +74,24 @@ Function prog_menu(n_Task)
       // aadd(func_menu, {'edit_priem()', ;
       //                  'regi_nastr(2)';
       //                 })
-  // case glob_task == X_PPOKOJ  //
-  //   fl := begin_task_ppokoj()
-  //   aadd(cmain_menu, 1)
-  //   aadd(main_menu,' ~Приёмный покой ')
-  //   aadd(main_message,'Ввод данных в приёмном покое стационара')
-  //   aadd(first_menu, {'~Добавление', ;
-  //                     '~Редактирование', 0, ;
-  //                     'В другое ~отделение', 0, ;
-  //                     '~Удаление'})
-  //   aadd(first_message, {;
-  //       'Добавление истории болезни', ;
-  //       'Редактирование истории болезни и печать медицинской и стат.карты', ;
-  //       'Перевод больного из одного отделения в другое', ;
-  //       'Удаление истории болезни';
-  //     } )
-  //   aadd(func_menu, {'add_ppokoj()', ;
-  //                    'edit_ppokoj()', ;
-  //                    'ppokoj_perevod()', ;
-  //                    'del_ppokoj()'})
+  case n_task == X_SERVICE
+    aadd(cmain_menu, 1)
+    aadd(main_menu,' ~Услуги ')
+    aadd(main_message,'Просмотр допустимых услуг для медицинской организации')
+    aadd(first_menu, {'~Проверка допустимости услуги', ;
+                      '~Список услуг', 0, ;
+                      'В другое ~отделение', 0, ;
+                      '~Удаление'})
+    aadd(first_message, {;
+        'Проверка открытия услуги для организации', ;
+        'Просмотр списка допустимых услуг', ;
+        'Перевод больного из одного отделения в другое', ;
+        'Удаление истории болезни';
+      } )
+    aadd(func_menu, {'add_ppokoj()', ;
+                     'edit_ppokoj()', ;
+                     'ppokoj_perevod()', ;
+                     'del_ppokoj()'})
   //   aadd(cmain_menu, 34)
   //   aadd(main_menu,' ~Информация ')
   //   aadd(main_message,'Просмотр / печать статистики по больным')
@@ -126,7 +123,7 @@ Function prog_menu(n_Task)
   //     } )
   //   aadd(func_menu, {'f_pp_stol()', ;
   //                    'pp_nastr()'})
-  // case glob_task == X_OMS  //
+  // case n_task == X_OMS  //
   //   fl := begin_task_oms()
   //   aadd(cmain_menu, 1)
   //   aadd(main_menu,' ~ОМС ')
@@ -259,7 +256,7 @@ Function prog_menu(n_Task)
   //     } )
   //   aadd(func_menu, {'dispanserizacia()', ;
   //                    'disp_nabludenie()'} ) 
-  // case glob_task == X_263 //
+  // case n_task == X_263 //
   //   fl := begin_task_263()
   //   if is_napr_pol
   //     aadd(cmain_menu, 1)
@@ -399,7 +396,7 @@ Function prog_menu(n_Task)
   //   aadd(first_message[k], 'Настройка каталогов обмена - откуда зачитывать полученные из ТФОМС файлы')
   //   aadd(func_menu[k], '_263_to_nastr()')
   //   //
-  // case glob_task == X_PLATN //
+  // case n_task == X_PLATN //
   //   fl := begin_task_plat()
   //   aadd(cmain_menu, 1)
   //   aadd(main_menu,' ~Платные услуги ')
@@ -486,7 +483,7 @@ Function prog_menu(n_Task)
   //     aadd(first_message[3], 'Настройка работы с кассовым аппаратом')
   //     aadd(func_menu[3], 'fr_nastrojka()')
   //   endif
-  // case glob_task == X_ORTO  //
+  // case n_task == X_ORTO  //
   //   fl := begin_task_orto()
   //   aadd(cmain_menu, 1)
   //   aadd(main_menu,' ~Ортопедия ')
@@ -564,7 +561,7 @@ Function prog_menu(n_Task)
   //     aadd(first_message[3], 'Настройка работы с кассовым аппаратом')
   //     aadd(func_menu[3], 'fr_nastrojka()')
   //   endif
-  // case glob_task == X_KASSA //
+  // case n_task == X_KASSA //
   //   fl := begin_task_kassa()
   //   //
   //   aadd(cmain_menu, 1)
@@ -639,7 +636,7 @@ Function prog_menu(n_Task)
   //                   'fk_usl_dogov()', ;
   //                   'fr_nastrojka()', ;
   //                   'nastr_kassa(2)'})
-  // case glob_task == X_KEK  //
+  // case n_task == X_KEK  //
   //   if !between(hb_user_curUser:KEK, 1, 3)
   //     n_message({'Недопустимая группа экспертизы (КЭК): '+lstr(hb_user_curUser:KEK), ;
   //                '', ;
@@ -680,7 +677,7 @@ Function prog_menu(n_Task)
   //     aadd(first_message, {'Настройка значений по умолчанию'} )
   //     aadd(func_menu, {'kek_nastr()'})
   //   endif
-  // case glob_task == X_SPRAV //
+  // case n_task == X_SPRAV //
   //   fl := begin_task_sprav()
   //   //
   //   aadd(cmain_menu, 1)
@@ -724,7 +721,7 @@ Function prog_menu(n_Task)
   //       'Просмотр/печать общих справочников';
   //     } )
   //   aadd(func_menu, {'o_sprav()'} )
-  // case glob_task == X_SERVIS //
+  // case n_task == X_SERVIS //
   //   aadd(cmain_menu, 1)
   //   aadd(main_menu,' ~Сервисы ')
   //   aadd(main_message,'Сервисы и настройки')
@@ -835,7 +832,7 @@ Function prog_menu(n_Task)
   //                      'run_my_hrb("mo_hrb1","phonegram_15_kz()")', ;
   //                      'run_my_hrb("mo_hrb1","b_25_perinat_2()")'} )
   //   endif
-  // case glob_task == X_COPY //
+  // case n_task == X_COPY //
   //   aadd(cmain_menu, 1)
   //   aadd(main_menu,' ~Резервное копирование ')
   //   aadd(main_message,'Резервное копирование базы данных')
@@ -851,7 +848,7 @@ Function prog_menu(n_Task)
   //       'm_copy_DB(1)', ;
   //       'm_copy_DB(2)';
   //     })
-  // case glob_task == X_INDEX //
+  // case n_task == X_INDEX //
   //   aadd(cmain_menu, 1)
   //   aadd(main_menu,' ~Переиндексирование ')
   //   aadd(main_message,'Переиндексирование базы данных')

@@ -3,7 +3,7 @@
 #include 'inkey.ch'
 #include 'function.ch'
 #include 'edit_spr.ch'
-#include 'chip_mo.ch'
+#include '.\check_pro.ch'
 
 external ust_printer, ErrorSys
 
@@ -124,8 +124,8 @@ FUNCTION load_public()
 // 22.07.23
 Function f_main(r0)
   Static arr1 := {;
-    {'Пароли на откат реестров'            , 1, , .t., 'ПАРОЛИ'}, ;
-    {'Приёмный покой стационара'           , X_PPOKOJ, , .t., 'ПРИЁМНЫЙ ПОКОЙ'}, ;
+    {'Пароли на откат реестров'             , X_PASSWORD, , .t., 'ПАРОЛИ'}, ;
+    {'Услуги'                               , X_SERVICE, , .t., 'СПРАВОЧНИК УСЛУГ'}, ;
     {'Обязательное медицинское страхование', X_OMS   , , .t., 'ОМС'}, ;
     {'Учёт направлений на госпитализацию'  , X_263   , , .f., 'ГОСПИТАЛИЗАЦИЯ'}, ;
     {'Платные услуги'                      , X_PLATN , , .t., 'ПЛАТНЫЕ УСЛУГИ'}, ;
