@@ -32,5 +32,8 @@ check_pro.prg
 Errorsys.prg
 .\MENU\prog_menu.prg
 .\SYSTEM\system.prg
+.\SYSTEM\extension.prg
+.\SYSTEM\use_func.prg
 .\CRE_PAS\cre_pas.prg
 .\DICTIONARY\dictionary.prg
+.\DICTIONARY\func_dict.prg

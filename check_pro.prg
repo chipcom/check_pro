@@ -23,8 +23,6 @@ procedure main( ... )
   // set key K_F1 to f_help()
   // hard_err('create')
   FillScreen(p_char_screen, p_color_screen)
-  cur_year := STR(YEAR(sys_date), 4)
-  new_dir = ''
   SETCOLOR(color1)
 
   f_main(r)
@@ -144,9 +142,10 @@ Function f_main(r0)
   next
 
   arr := {}
-  Public glob_task, blk_ekran, g_arr_stand := {}, ;
-       main_menu, main_message, first_menu, ;
-       first_message, func_menu, cmain_menu
+  Public glob_task, g_arr_stand := {}
+      // , blk_ekran
+      //  main_menu, main_message, first_menu, ;
+      //  first_message, func_menu, cmain_menu
   // вывести верхние строки главного экрана
   r0 := main_up_screen()
   // вывести центральные строки главного экрана

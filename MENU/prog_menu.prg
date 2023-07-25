@@ -8,17 +8,18 @@
 // 23.07.23
 Function prog_menu(n_Task)
   Local it, s, k, fl := .t., cNameIcon
-  
+  local arr
+
+  private main_menu := {}
+  private main_message := {}
+  private first_menu := {}
+  private first_message := {}
+  private func_menu := {}
+  private cmain_menu := {}
+  private blk_ekran := {|| devpos(maxrow() - 2, maxcol() - len(dir_server())), ;
+                        devout(upper(dir_server()),'W+/N*') }
+
   sys_date := DATE()
-  c4sys_date := dtoc4(sys_date)
-  blk_ekran := {|| devpos(maxrow() - 2, maxcol() - len(dir_server())), ;
-                   devout(upper(dir_server()),'W+/N*') }
-  main_menu := {}
-  main_message := {}
-  first_menu := {}
-  first_message := {}
-  func_menu := {}
-  cmain_menu := {}
   put_icon(__full_name(), 'MAIN_ICON') // перевывести заголовок окна
   SETCOLOR(color1)
   FillScreen(p_char_screen, p_color_screen)
@@ -75,6 +76,7 @@ Function prog_menu(n_Task)
       //                  'regi_nastr(2)';
       //                 })
   case n_task == X_SERVICE
+    arr := begin_task_services()
     aadd(cmain_menu, 1)
     aadd(main_menu,' ~Услуги ')
     aadd(main_message,'Просмотр допустимых услуг для медицинской организации')
@@ -88,10 +90,10 @@ Function prog_menu(n_Task)
         'Перевод больного из одного отделения в другое', ;
         'Удаление истории болезни';
       } )
-    aadd(func_menu, {'add_ppokoj()', ;
-                     'edit_ppokoj()', ;
-                     'ppokoj_perevod()', ;
-                     'del_ppokoj()'})
+    aadd(func_menu, {'ne_real()', ;
+                     'ne_real()', ;
+                     'ne_real()', ;
+                     'ne_real()'})
   //   aadd(cmain_menu, 34)
   //   aadd(main_menu,' ~Информация ')
   //   aadd(main_message,'Просмотр / печать статистики по больным')

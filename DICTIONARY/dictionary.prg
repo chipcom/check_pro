@@ -54,34 +54,34 @@ Function print_uslugi()
     add_string(center('[ ζ¥­λ ―® α®αβ®ο­¨ξ ­  ' + date_8(mdate) + '£. ]', sh))
     add_string('')
     if t_arr[2] > 500
-      arrKSLP := getKSLPtable( mdate )
-      add_string('‘‹:')
-      for each rowKSLP in arrKSLP
-        k := perenos(ta, alltrim(rowKSLP[3]), 58)
-        for i := 1 to k
-          if i == 1
-            tmpKSLP := str(rowKSLP[1], 7) + ' - ' + ta[i] + ' (ª®¥δ=' + str(rowKSLP[4], 4, 2) + ')'
-          else
-            tmpKSLP := space(10) + ta[i]
-          endif
-          add_string(tmpKSLP)
-        next
-      next
-      arrKIRO := getKIROtable( mdate )
-      add_string(':')
-      for each rowKIRO in arrKIRO
-        if between_date(rowKIRO[5], rowKIRO[6], mdate)
-          k := perenos(ta, alltrim(rowKIRO[3]), 58)
-          for i := 1 to k
-            if i == 1
-              tmpKIRO := str(rowKIRO[1], 7) + ' - ' + ta[i] + ' (ª®¥δ=' + str(rowKIRO[4], 4, 2) + ')'
-            else
-              tmpKIRO := space(10) + ta[i]
-            endif
-            add_string(tmpKIRO)
-          next
-        endif
-      next
+      // arrKSLP := getKSLPtable( mdate )
+      // add_string('‘‹:')
+      // for each rowKSLP in arrKSLP
+      //   k := perenos(ta, alltrim(rowKSLP[3]), 58)
+      //   for i := 1 to k
+      //     if i == 1
+      //       tmpKSLP := str(rowKSLP[1], 7) + ' - ' + ta[i] + ' (ª®¥δ=' + str(rowKSLP[4], 4, 2) + ')'
+      //     else
+      //       tmpKSLP := space(10) + ta[i]
+      //     endif
+      //     add_string(tmpKSLP)
+      //   next
+      // next
+      // arrKIRO := getKIROtable( mdate )
+      // add_string(':')
+      // for each rowKIRO in arrKIRO
+      //   if between_date(rowKIRO[5], rowKIRO[6], mdate)
+      //     k := perenos(ta, alltrim(rowKIRO[3]), 58)
+      //     for i := 1 to k
+      //       if i == 1
+      //         tmpKIRO := str(rowKIRO[1], 7) + ' - ' + ta[i] + ' (ª®¥δ=' + str(rowKIRO[4], 4, 2) + ')'
+      //       else
+      //         tmpKIRO := space(10) + ta[i]
+      //       endif
+      //       add_string(tmpKIRO)
+      //     next
+      //   endif
+      // next
 
       sbase := prefixFileRefName(lyear) + 'k006'
       R_Use(exe_dir + sbase, , 'K006')
