@@ -1,4 +1,5 @@
 c:\Harbour\bin\hbmk2 check_pro.hbp -b -comp=mingw
+copy check_pro.exe d:\_mo\chip\check_pro_exe
 
 @REM @echo off
 @REM if %1. == . goto MissingParameter

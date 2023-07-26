@@ -6,7 +6,6 @@
 #include 'tbox.ch'
 
 function begin_task_services()
-  local arr := {}
   local dbName := '_mo_mo'
   local standart, uroven
   local _arr := {}
@@ -46,23 +45,28 @@ function begin_task_services()
       row[1] := hb_SToD(row[1])
     next
 
-    aadd(_arr, { ;
-            alltrim((dbName)->NAMES), ;
-            alltrim((dbName)->CODEM), ;
-            (dbName)->PROD, ;
-            (dbName)->DEND, ;
-            alltrim((dbName)->MCOD), ;
-            alltrim((dbName)->NAMEF), ;
-            uroven, ; // уровень оплаты, с 2013 года 4 - индивидуальные тарифы
-            standart, ;
-            (dbName)->MAIN == '1', ;
-            (dbName)->PFA == '1', ;
-            (dbName)->PFS == '1', ;
-            alltrim((dbName)->ADRES) ;
-      } )
+    // aadd(_arr, { ;
+    _arr := { ;
+        alltrim((dbName)->NAMES), ;
+        alltrim((dbName)->CODEM), ;
+        (dbName)->PROD, ;
+        (dbName)->DEND, ;
+        alltrim((dbName)->MCOD), ;
+        alltrim((dbName)->NAMEF), ;
+        uroven, ; // уровень оплаты, с 2013 года 4 - индивидуальные тарифы
+        standart, ;
+        (dbName)->MAIN == '1', ;
+        (dbName)->PFA == '1', ;
+        (dbName)->PFS == '1', ;
+        alltrim((dbName)->ADRES) ;
+      }
+    //  } )
   endif
   (dbName)->(dbCloseArea())
   restscreen(buf)
+  if len(_arr) != 0
+    index_services(dir_server(), cur_dir(), _arr)
+  endif
   return _arr
 
 // 25.07.23

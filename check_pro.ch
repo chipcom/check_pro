@@ -13,3 +13,17 @@
 #define X_SERVIS 22
 #define X_COPY   23
 #define X_INDEX  24
+
+#define _MO_SHORT_NAME 1
+#define _MO_KOD_TFOMS  2
+#define _MO_PROD       3
+#define _MO_DEND       4
+#define _MO_KOD_FFOMS  5
+#define _MO_FULL_NAME  6
+#define _MO_UROVEN     7
+#define _MO_STANDART   8
+#define _MO_IS_MAIN    9
+#define _MO_IS_UCH    10
+#define _MO_IS_SMP    11
+#define _MO_ADRES     12
+#define _MO_LEN_ARR   12
