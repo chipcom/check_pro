@@ -1,25 +1,20 @@
 #include 'function.ch'
 #include 'chip_mo.ch'
 
-#define WORK_YEAR 2023
+// #define WORK_YEAR 2023
 #define INDEX_NEED  2 // число лет обязательной переиндексации
 
 // 26.07.23 проверка и переиндексирование справочников ТФОМС
 Function index_services(exe_dir, cur_dir, arr)
-  Local fl := .t., i, buf := save_maxrow()
-  local lSchema := .f.
-  local file_index, sbase
+  Local buf := save_maxrow()
 
-altd()
-
-  // fl := dep_index_and_fill(WORK_YEAR, exe_dir, cur_dir)  // справочник отделений на countYear год
-  fl := usl_Index(WORK_YEAR, exe_dir, cur_dir)    // справочник услуг ТФОМС на countYear год
-  fl := uslc_Index(WORK_YEAR, exe_dir, cur_dir, arr)   // цены на услуги на countYear год
-  // fl := uslf_Index(WORK_YEAR, exe_dir, cur_dir)   // справочник услуг ФФОМС countYear
-  // fl := unit_Index(WORK_YEAR, exe_dir, cur_dir)   // план-заказ
-  // fl := shema_index(WORK_YEAR, exe_dir, cur_dir)
-  // fl := k006_index(WORK_YEAR, exe_dir, cur_dir)
-  //// fl := it_Index(WORK_YEAR, exe_dir, cur_dir)
+  // dep_index_and_fill(WORK_YEAR, exe_dir, cur_dir)  // справочник отделений на countYear год
+  usl_Index(WORK_YEAR, exe_dir, cur_dir)    // справочник услуг ТФОМС на countYear год
+  uslc_Index(WORK_YEAR, exe_dir, cur_dir, arr)   // цены на услуги на countYear год
+  uslf_Index(WORK_YEAR, exe_dir, cur_dir)   // справочник услуг ФФОМС countYear
+  k006_index(WORK_YEAR, exe_dir, cur_dir)
+  // unit_Index(WORK_YEAR, exe_dir, cur_dir)   // план-заказ
+  // shema_index(WORK_YEAR, exe_dir, cur_dir)
 
   // // onkko_vmp
   // sbase := '_mo_ovmp'
@@ -90,7 +85,7 @@ function uslc_Index(val_year, exe_dir, cur_dir, arr)
   local sbase, prefix
   local index_usl_name
   local file_index
-  
+
   prefix := prefixFileRefName(val_year)
   sbase :=  prefix + 'uslc'  // цены на услуги на конкретный год
   if hb_vfExists(exe_dir + sbase + sdbf)

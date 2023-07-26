@@ -45,7 +45,6 @@ function begin_task_services()
       row[1] := hb_SToD(row[1])
     next
 
-    // aadd(_arr, { ;
     _arr := { ;
         alltrim((dbName)->NAMES), ;
         alltrim((dbName)->CODEM), ;
@@ -60,12 +59,13 @@ function begin_task_services()
         (dbName)->PFS == '1', ;
         alltrim((dbName)->ADRES) ;
       }
-    //  } )
   endif
   (dbName)->(dbCloseArea())
   restscreen(buf)
   if len(_arr) != 0
+    waitStatus()
     index_services(dir_server(), cur_dir(), _arr)
+    restscreen(buf)
   endif
   return _arr
 
@@ -73,18 +73,6 @@ function begin_task_services()
 Function f1_mo_mo(oBrow)
   Local n := 56
   Local oColumn, blk := {|_c| _c := f0_mo_mo(), {{1, 2}, {3, 4}, {5, 6}, {7, 8}, {9, 10}}[_c]}
-  // oColumn := TBColumnNew('   ˜¨äà', {|| usl->shifr })
-  // oColumn:colorBlock := blk
-  // oBrow:addColumn(oColumn)
-  // oColumn := TBColumnNew('˜¨äà ’”ŽŒ‘', {|| opr_shifr_TFOMS(usl->shifr1, usl->kod)})
-  // oColumn:colorBlock := blk
-  // oBrow:addColumn(oColumn)
-  // if is_zf_stomat == 1
-  //   oColumn := TBColumnNew('‡”', {|| iif(usl->zf == 1, '¤ ', '  ')})
-  //   oColumn:colorBlock := blk
-  //   oBrow:addColumn(oColumn)
-  //   n -= 3
-  // endif
   oColumn := TBColumnNew(center(' ¨¬¥­®¢ ­¨¥ ®à£ ­¨§ æ¨¨', n), {|| left(_MO_MO->NAMES, n)})
   oColumn:colorBlock := blk
   oBrow:addColumn(oColumn)

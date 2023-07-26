@@ -8,7 +8,6 @@
 // 23.07.23
 Function prog_menu(n_Task)
   Local it, s, k, fl := .t., cNameIcon
-  local arr
 
   private main_menu := {}
   private main_message := {}
@@ -18,6 +17,7 @@ Function prog_menu(n_Task)
   private cmain_menu := {}
   private blk_ekran := {|| devpos(maxrow() - 2, maxcol() - len(dir_server())), ;
                         devout(upper(dir_server()),'W+/N*') }
+
 
   sys_date := DATE()
   put_icon(__full_name(), 'MAIN_ICON') // перевывести заголовок окна
@@ -76,7 +76,8 @@ Function prog_menu(n_Task)
       //                  'regi_nastr(2)';
       //                 })
   case n_task == X_SERVICE
-    arr := begin_task_services()
+    private glob_mo
+    glob_mo := begin_task_services()
     aadd(cmain_menu, 1)
     aadd(main_menu,' ~Услуги ')
     aadd(main_message,'Просмотр допустимых услуг для медицинской организации')
@@ -91,7 +92,7 @@ Function prog_menu(n_Task)
         'Удаление истории болезни';
       } )
     aadd(func_menu, {'ne_real()', ;
-                     'ne_real()', ;
+                     'print_uslugi()', ;
                      'ne_real()', ;
                      'ne_real()'})
   //   aadd(cmain_menu, 34)

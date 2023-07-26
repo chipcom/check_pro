@@ -2,29 +2,27 @@
 #include 'inkey.ch'
 #include 'function.ch'
 #include 'edit_spr.ch'
-#include '.\check_pro.ch'
+//#include '.\check_pro.ch'
+#include 'chip_mo.ch'
 
 // 16.06.23
 Function print_uslugi()
   Static sdate
-  Local k, buf := save_maxrow(), name_file := cur_dir + 'uslugi' + stxt, nu, ret_arr, ;
+  Local k, buf := save_maxrow(), name_file := cur_dir() + 'uslugi' + stxt, nu, ret_arr, ;
       sh := 80, HH := 60, t_arr, i, s, fl, v1, v2, mdate, fl1uslc, fl2uslc, ;
       ta[2], lyear, fl1del, fl2del, len_ksg := 10
   local arrKSLP, rowKSLP, tmpKSLP, arrKIRO, rowKIRO, tmpKIRO
   local sbase
 
-  DEFAULT sdate TO sys1_date
+  DEFAULT sdate TO sys_date
   mdate := input_value(20, 5, 22, 73,color1, ;
                      'Дата, по состоянию на которую выводятся цены на услуги', ;
                      sdate)
   if mdate == NIL
     return NIL
   endif
-  if (lyear := year(mdate)) < 2018
-    return func_error(4, 'Вы запрашиваете слишком старую информацию')
-  endif
-  if lyear > WORK_YEAR
-    return func_error(4, 'Информация на будуюшую дату отсутствует')
+  if (lyear := year(mdate)) != WORK_YEAR
+    return func_error(4, 'Работаем только с текущим годом')
   endif
   sdate := mdate
   if (k := popup_2array(usl9TFOMS(mdate), T_ROW, T_COL - 5, su, 1, @t_arr, 'Выберите группу услуг', 'B/BG', color0)) > 0
@@ -42,11 +40,6 @@ Function print_uslugi()
     n_list := 1
     tek_stroke := 0
     nu := get_uroven(mdate)
-    /*if between(nu, 1, 3)
-      s := 'Уровень цен на мед.услуги: '+lstr(nu)
-    else
-      s := 'Индивидуальные тарифы на мед.услуги'
-    endif*/
     add_string(glob_mo[_MO_SHORT_NAME] + iif(valtype(ret_arr) == 'A', ' (' + ret_arr[1] + ')', ''))
     add_string('')
     add_string(center('Список услуг по группе', sh))
@@ -84,11 +77,11 @@ Function print_uslugi()
       // next
 
       sbase := prefixFileRefName(lyear) + 'k006'
-      R_Use(exe_dir + sbase, , 'K006')
+      R_Use(dir_server() + sbase, , 'K006')
     
-      index on SHIFR + str(ns, 6) to (cur_dir + 'tmp_k006') unique
-      index on SHIFR + str(ns, 6)+ds+sy to (cur_dir + 'tmp_k006_')
-      set index to (cur_dir + 'tmp_k006'), (cur_dir + 'tmp_k006_')
+      index on SHIFR + str(ns, 6) to (cur_dir() + 'tmp_k006') unique
+      index on SHIFR + str(ns, 6) + ds + sy to (cur_dir() + 'tmp_k006_')
+      set index to (cur_dir() + 'tmp_k006'), (cur_dir() + 'tmp_k006_')
     endif
     use_base('luslc')
     use_base('lusl')
@@ -97,9 +90,9 @@ Function print_uslugi()
 
     dbSelectArea(lal)
     if t_arr[2] > 500
-      index on fsort_usl(shifr) to (cur_dir + 'tmplu') for is_ksg(shifr, t_arr[2] - 500) .and. datebeg >= boy(mdate)
+      index on fsort_usl(shifr) to (cur_dir() + 'tmplu') for is_ksg(shifr, t_arr[2] - 500) .and. datebeg >= boy(mdate)
     else
-      index on fsort_usl(shifr) to (cur_dir + 'tmp') for usl2arr(shifr)[1]==k .and. !is_ksg(shifr)
+      index on fsort_usl(shifr) to (cur_dir() + 'tmp') for usl2arr(shifr)[1]==k .and. !is_ksg(shifr)
     endif
     go top
     do while !eof()
