@@ -13,6 +13,7 @@ Function print_uslugi()
       ta[2], lyear, fl1del, fl2del, len_ksg := 10
   local arrKSLP, rowKSLP, tmpKSLP, arrKIRO, rowKIRO, tmpKIRO
   local sbase
+  local su := 110 // не понятно
 
   DEFAULT sdate TO sys_date
   mdate := input_value(20, 5, 22, 73,color1, ;
@@ -47,34 +48,34 @@ Function print_uslugi()
     add_string(center('[ цены по состоянию на ' + date_8(mdate) + 'г. ]', sh))
     add_string('')
     if t_arr[2] > 500
-      // arrKSLP := getKSLPtable( mdate )
-      // add_string('КСЛП:')
-      // for each rowKSLP in arrKSLP
-      //   k := perenos(ta, alltrim(rowKSLP[3]), 58)
-      //   for i := 1 to k
-      //     if i == 1
-      //       tmpKSLP := str(rowKSLP[1], 7) + ' - ' + ta[i] + ' (коеф=' + str(rowKSLP[4], 4, 2) + ')'
-      //     else
-      //       tmpKSLP := space(10) + ta[i]
-      //     endif
-      //     add_string(tmpKSLP)
-      //   next
-      // next
-      // arrKIRO := getKIROtable( mdate )
-      // add_string('КИРО:')
-      // for each rowKIRO in arrKIRO
-      //   if between_date(rowKIRO[5], rowKIRO[6], mdate)
-      //     k := perenos(ta, alltrim(rowKIRO[3]), 58)
-      //     for i := 1 to k
-      //       if i == 1
-      //         tmpKIRO := str(rowKIRO[1], 7) + ' - ' + ta[i] + ' (коеф=' + str(rowKIRO[4], 4, 2) + ')'
-      //       else
-      //         tmpKIRO := space(10) + ta[i]
-      //       endif
-      //       add_string(tmpKIRO)
-      //     next
-      //   endif
-      // next
+      arrKSLP := getKSLPtable( mdate )
+      add_string('КСЛП:')
+      for each rowKSLP in arrKSLP
+        k := perenos(ta, alltrim(rowKSLP[3]), 58)
+        for i := 1 to k
+          if i == 1
+            tmpKSLP := str(rowKSLP[1], 7) + ' - ' + ta[i] + ' (коеф=' + str(rowKSLP[4], 4, 2) + ')'
+          else
+            tmpKSLP := space(10) + ta[i]
+          endif
+          add_string(tmpKSLP)
+        next
+      next
+      arrKIRO := getKIROtable( mdate )
+      add_string('КИРО:')
+      for each rowKIRO in arrKIRO
+        if between_date(rowKIRO[5], rowKIRO[6], mdate)
+          k := perenos(ta, alltrim(rowKIRO[3]), 58)
+          for i := 1 to k
+            if i == 1
+              tmpKIRO := str(rowKIRO[1], 7) + ' - ' + ta[i] + ' (коеф=' + str(rowKIRO[4], 4, 2) + ')'
+            else
+              tmpKIRO := space(10) + ta[i]
+            endif
+            add_string(tmpKIRO)
+          next
+        endif
+      next
 
       sbase := prefixFileRefName(lyear) + 'k006'
       R_Use(dir_server() + sbase, , 'K006')
@@ -368,13 +369,13 @@ Function usl9TFOMS(mdate)
   
     Ins_Array(arr, 1,{'КСГ в ДНЕВНОМ стационаре', 502})
     Ins_Array(arr, 1,{'КСГ в СТАЦИОНАРЕ', 501})
-  
+
     use_base('luslc')
     for i := 1 to len(arr)
       if arr[i, 2] > 500
         sShifr := iif(arr[i, 2] == 501, 'st', 'ds')
       else
-        sShifr := lstr(arr[i, 2])+'.'
+        sShifr := lstr(arr[i, 2]) + '.'
       endif
       ls := len(sShifr)
       dbselectArea(lal)
@@ -385,15 +386,15 @@ Function usl9TFOMS(mdate)
         if iif(arr[i, 2] > 500, is_ksg(&lal.->shifr), .t.)
           fl_yes := .t.
           // поиск цены по дате окончания лечения
-          if between_date(&lal.->datebeg,&lal.->dateend,mdate)
-            fl_delete := .f. ; exit
-  
+          if between_date(&lal.->datebeg, &lal.->dateend, mdate)
+            fl_delete := .f.
+            exit
           endif
         endif
         skip
       enddo
       if fl_yes .and. !fl_delete
-        aadd(arr1,arr[i])
+        aadd(arr1, arr[i])
       endif
     next
     close databases
@@ -454,3 +455,106 @@ Function fcena_oms(sShifr, lVzReb, dDate, /*@*/fl_delete, /*@*/fl_yes, /*@*/_ifi
   next
   select (tmp_select)
   return v
+
+// 18.01.22
+// возвращает массив КСЛП на указанную дату
+function getKSLPtable(dateSl)
+  Local dbName, dbAlias := 'KSLP_'
+  local tmp_select := select()
+  local retKSLP := {}
+  local aKSLP, row
+  local yearSl := year(dateSl)
+
+  static hKSLP, lHashKSLP := .f.
+
+  // при отсутствии ХЭШ-массива создадим его
+  if !lHashKSLP
+    hKSLP := hb_Hash()
+    lHashKSLP := .t.
+  endif
+
+  // получим массив КСЛП из хэша по ключу ГОД ОКОНЧАНИЯ СЛУЧАЯ, или загрузим его из справочника
+  if hb_HHasKey( hKSLP, yearSl )
+    aKSLP := hb_HGet(hKSLP, yearSl)
+  else
+    aKSLP := {}
+    tmp_select := select()
+    dbName := prefixFileRefName(dateSl) + 'kslp'
+
+    dbUseArea( .t., 'DBFNTX', dir_server() + dbName, dbAlias , .t., .f. )
+    (dbAlias)->(dbGoTop())
+    do while !(dbAlias)->(EOF())
+      aadd(aKSLP, { (dbAlias)->CODE, alltrim((dbAlias)->NAME), alltrim((dbAlias)->NAME_F), (dbAlias)->COEFF, (dbAlias)->DATEBEG, (dbAlias)->DATEEND })
+      (dbAlias)->(dbSkip())
+    enddo
+    (dbAlias)->(dbCloseArea())
+    asort(aKSLP,,,{|x,y| x[1] < y[1] })
+
+    Select(tmp_select)
+    // поместим в ХЭШ-массив
+    hKSLP[yearSl] := aKSLP
+  endif
+
+  // выберем возможные КСЛП по дате
+  for each row in aKSLP
+    if between(dateSl, row[5], row[6])
+      aadd(retKSLP, { row[1], row[2], row[3], row[4], row[5], row[6] })
+    endif
+  next
+
+  if empty(retKSLP)
+    alertx('На дату ' + DToC(dateSl) + ' КСЛП отсутствуют!')
+  endif
+  return retKSLP
+
+// 18.01.22
+// возвращает массив КИРО на указанную дату
+function getKIROtable( dateSl )
+  Local dbName, dbAlias := 'KIRO_'
+  local tmp_select := select()
+  local retKIRO := {}
+  local aKIRO, row
+  local yearSl := year(dateSl)
+
+  static hKIRO, lHashKIRO := .f.
+
+  // при отсутствии ХЭШ-массива создадим его
+  if !lHashKIRO
+    hKIRO := hb_Hash()
+    lHashKIRO := .t.
+  endif
+
+  // получим массив КИРО из хэша по ключу ГОД ОКОНЧАНИЯ СЛУЧАЯ, или загрузим его из справочника
+  if hb_HHasKey( hKIRO, yearSl )
+    aKIRO := hb_HGet(hKIRO, yearSl)
+  else
+    aKIRO := {}
+    tmp_select := select()
+    dbName := prefixFileRefName(dateSl) + 'kiro'
+
+    dbUseArea( .t., 'DBFNTX', dir_server() + dbName, dbAlias , .t., .f. )
+    (dbAlias)->(dbGoTop())
+    do while !(dbAlias)->(EOF())
+      aadd(aKIRO, { (dbAlias)->CODE, alltrim((dbAlias)->NAME), alltrim((dbAlias)->NAME_F), (dbAlias)->COEFF, (dbAlias)->DATEBEG, (dbAlias)->DATEEND })
+      (dbAlias)->(dbSkip())
+    enddo
+    (dbAlias)->(dbCloseArea())
+    asort(aKIRO,,,{|x,y| x[1] < y[1] })
+
+    Select(tmp_select)
+    // поместим в ХЭШ-массив
+    hKIRO[yearSl] := aKIRO
+  endif
+
+  // выберем возможные КИРО по дате
+  for each row in aKIRO
+    if between(dateSl, row[5], row[6])
+      aadd(retKIRO, { row[1], row[2], row[3], row[4], row[5], row[6] })
+    endif
+  next
+
+  if empty(retKIRO)
+    alertx('На дату ' + DToC(dateSl) + ' КИРО отсутствуют!')
+  endif
+
+  return retKIRO

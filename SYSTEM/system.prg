@@ -167,7 +167,7 @@ function disable_podrazdelenie_TFOMS(lkdate)
   }
 
   // В соответствии с решением Комиссии от 13.06.2023 с 01.06.2023 изменены уровни оплаты для ряда МО.
-  if ascan(aCodem, hb_main_curOrg:Kod_Tfoms) != 0 .and. lkdate >= 0d20230601
+  if ascan(aCodem, glob_mo[_MO_KOD_TFOMS]) != 0 .and. lkdate >= 0d20230601
     ret := .t.
   endif
 

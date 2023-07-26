@@ -8,7 +8,7 @@
 Function index_services(exe_dir, cur_dir, arr)
   Local buf := save_maxrow()
 
-  // dep_index_and_fill(WORK_YEAR, exe_dir, cur_dir)  // справочник отделений на countYear год
+  dep_index_and_fill(WORK_YEAR, exe_dir, cur_dir, arr)  // справочник отделений на countYear год
   usl_Index(WORK_YEAR, exe_dir, cur_dir)    // справочник услуг ТФОМС на countYear год
   uslc_Index(WORK_YEAR, exe_dir, cur_dir, arr)   // цены на услуги на countYear год
   uslf_Index(WORK_YEAR, exe_dir, cur_dir)   // справочник услуг ФФОМС countYear
@@ -34,36 +34,36 @@ Function index_services(exe_dir, cur_dir, arr)
 
   return nil
 
-// 09.03.23
-// function dep_index_and_fill(val_year, exe_dir, cur_dir)
-//   local sbase
-//   local file_index
+// 26.07.23
+function dep_index_and_fill(val_year, exe_dir, cur_dir, arr)
+  local sbase
+  local file_index
   
-//   sbase := prefixFileRefName(val_year) + 'dep'  // справочник отделений на конкретный год
-//   if hb_vfExists(exe_dir + sbase + sdbf)
-//     file_index := cur_dir + sbase + sntx
-//     R_Use(exe_dir + sbase, , 'DEP')
-//     index on str(code, 3) to (cur_dir + sbase) for codem == arr[_MO_KOD_TFOMS]
+  sbase := prefixFileRefName(val_year) + 'dep'  // справочник отделений на конкретный год
+  if hb_vfExists(exe_dir + sbase + sdbf)
+    file_index := cur_dir + sbase + sntx
+    R_Use(exe_dir + sbase, , 'DEP')
+    index on str(code, 3) to (cur_dir + sbase) for codem == arr[_MO_KOD_TFOMS]
 
-//     if val_year == WORK_YEAR
-//       dbeval({|| aadd(mm_otd_dep, {alltrim(dep->name_short) + ' (' + alltrim(dep->name) + ')', dep->code, dep->place})})
-//       if (is_otd_dep := (len(mm_otd_dep) > 0))
-//         asort(mm_otd_dep, , , {|x, y| x[1] < y[1]})
-//       endif
-//     endif
-//     use
-//     if is_otd_dep
-//       lIndex := .f.
-//       sbase := prefixFileRefName(val_year) + 'deppr' // справочник отделения + профили  на конкретный год
-//       if hb_vfExists(exe_dir + sbase + sdbf)
-//         file_index := cur_dir + sbase + sntx
-//         R_Use(exe_dir + sbase, , 'DEP')
-//         index on str(code, 3) + str(pr_mp, 3) to (cur_dir + sbase) for codem == arr[_MO_KOD_TFOMS]
-//         use
-//       endif
-//     endif
-//   endif
-//   return nil
+    if val_year == WORK_YEAR
+      dbeval({|| aadd(mm_otd_dep, {alltrim(dep->name_short) + ' (' + alltrim(dep->name) + ')', dep->code, dep->place})})
+      if (is_otd_dep := (len(mm_otd_dep) > 0))
+        asort(mm_otd_dep, , , {|x, y| x[1] < y[1]})
+      endif
+    endif
+    use
+    if is_otd_dep
+      lIndex := .f.
+      sbase := prefixFileRefName(val_year) + 'deppr' // справочник отделения + профили  на конкретный год
+      if hb_vfExists(exe_dir + sbase + sdbf)
+        file_index := cur_dir + sbase + sntx
+        R_Use(exe_dir + sbase, , 'DEP')
+        index on str(code, 3) + str(pr_mp, 3) to (cur_dir + sbase) for codem == arr[_MO_KOD_TFOMS]
+        use
+      endif
+    endif
+  endif
+  return nil
 
 // 26.07.23
 function usl_Index(val_year, exe_dir, cur_dir)

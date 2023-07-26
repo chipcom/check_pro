@@ -77,6 +77,7 @@ Function prog_menu(n_Task)
       //                 })
   case n_task == X_SERVICE
     private glob_mo
+    public is_otd_dep := .f., glob_otd_dep := 0, mm_otd_dep := {}
     glob_mo := begin_task_services()
     aadd(cmain_menu, 1)
     aadd(main_menu,' ~Услуги ')
