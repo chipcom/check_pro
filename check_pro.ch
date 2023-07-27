@@ -1,7 +1,7 @@
 // список задач
 #define X_PASSWORD  1
 #define X_SERVICE   2
-#define X_OMS     3
+#define X_IMPORT    3
 #define X_PLATN   4
 #define X_ORTO    5
 #define X_KASSA   6

@@ -34,7 +34,11 @@ Errorsys.prg
 .\SYSTEM\system.prg
 .\SYSTEM\extension.prg
 .\SYSTEM\use_func.prg
+.\SYSTEM\error_func.prg
 .\CRE_PAS\cre_pas.prg
 .\DICTIONARY\dictionary.prg
 .\DICTIONARY\func_dict.prg
 .\INDEX\index_services.prg
+.\XML\xmlparse.c
+.\XML\hxmldoc.prg
+.\XML\xml_func.prg

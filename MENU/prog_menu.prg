@@ -127,6 +127,24 @@ Function prog_menu(n_Task)
   //     } )
   //   aadd(func_menu, {'f_pp_stol()', ;
   //                    'pp_nastr()'})
+  case n_task == X_IMPORT
+    aadd(cmain_menu, 1)
+    aadd(main_menu,' ~Импорт справочников')
+    aadd(main_message,'Импорт справочников для приложения')
+    aadd(first_menu, {'~Справочники ТФОМС', ;
+                      'Справочники ~ФФОМС', 0, ;
+                      'В другое ~отделение', 0, ;
+                      '~Удаление'})
+    aadd(first_message, {;
+        'Проверка открытия услуги для организации', ;
+        'Просмотр списка допустимых услуг', ;
+        'Перевод больного из одного отделения в другое', ;
+        'Удаление истории болезни';
+      } )
+    aadd(func_menu, {'ne_real()', ;
+                     'ne_real()', ;
+                     'ne_real()', ;
+                     'ne_real()'})
   endcase
   // последнее меню для всех одно и то же
   // aadd(cmain_menu, maxcol() - 9)
