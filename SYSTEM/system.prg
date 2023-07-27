@@ -185,3 +185,19 @@ Function ret_otd_dep()
     glob_otd_dep := ret_arr[2]
   endif
   return ret_arr
+
+//
+Function a2default(arr, name, sDefault)
+  // arr - двумерный массив
+  // name - поиск по имени первого элемента
+  // sDefault - значение по умолчанию для второго элемента
+  Local s := '', i
+
+  if valtype(sDefault) == 'C'
+    s := sDefault
+  endif
+  if (i := ascan(arr, {|x| upper(x[1]) == upper(name)})) > 0
+    s := arr[i, 2]
+  endif
+  return s
+

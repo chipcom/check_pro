@@ -47,37 +47,6 @@ Function hard_err(p)
   endcase
   return NIL
 
-// 22.07.23
-FUNCTION f_end(yes_copy)
-  Static group_ini := 'RAB_MESTO'
-  Local i, spath := '', bSaveHandler := ERRORBLOCK( {|x| BREAK(x)} )
-
-  ERRORBLOCK(bSaveHandler)
-  //
-  hard_err('delete')
-  if __mvExist( 'cur_dir()' )
-	  filedelete(cur_dir() + 'tmp*.dbf')
-	  filedelete(cur_dir() + 'tmp*.ntx')
-	  filedelete(_tmp_dir1 + '*.*')
-	  if hb_DirExists(cur_dir() + _tmp_dir) .and. hb_DirDelete(cur_dir() + _tmp_dir) != 0
-		  //func_error(4, 'Не могу удалить каталог ''+'cur_dir()'+'_tmp_dir)
-	  endif
-	  filedelete(_tmp2dir1 + '*.*')
-	  if hb_DirExists(cur_dir() + _tmp2dir) .and. hb_DirDelete(cur_dir() + _tmp2dir) != 0
-		  //func_error(4, 'Не могу удалить каталог ' + cur_dir() + _tmp2dir)
-	  endif
-  endif
-  // удалим файлы отчетов в формате '*.HTML' из временной директории
-  filedelete( HB_DirTemp() + '*.html')
-  SET KEY K_ALT_F3 TO
-  SET KEY K_ALT_F2 TO
-  SET KEY K_ALT_X  TO
-  SET COLOR TO
-  SET CURSOR ON
-  CLS
-  QUIT
-  RETURN NIL
-
 // вернуть имя задачи по цифровому коду
 Function f_name_task(n_Task)
   Local it, s

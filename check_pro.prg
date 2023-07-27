@@ -27,10 +27,10 @@ procedure main( ... )
 
   f_main(r)
 
-  // f_end()
+  end_app()
   return
 
-// 22.07.23
+// 27.07.23
 FUNCTION load_public()
 
   REQUEST HB_CODEPAGE_RU866
@@ -52,10 +52,10 @@ FUNCTION load_public()
   setblink(.f.)
 
   Public DELAY_SPRD := 0 // время задержки для разворачивания строк
-  Public sdbf := '.DBF', sntx := '.NTX', stxt := '.TXT', szip := '.ZIP', ;
-    smem := '.MEM', srar := '.RAR', sxml := '.XML', sini := '.INI', ;
+  Public sdbf := '.DBF', sdbt := '.dbt', sntx := '.NTX', stxt := '.TXT', ;
+    smem := '.MEM', sxml := '.XML', sini := '.ini', ;
     sfr3 := '.FR3', sfrm := '.FRM', spdf := '.PDF', scsv := '.CSV', ;
-    sxls := '.xls', schip := '.CHIP', sdbt := '.dbt'
+    sxls := '.xls', schip := '.CHIP', szip := '.ZIP', srar := '.RAR'
   public cslash := hb_ps()
     
   PUBLIC public_mouse := .f., pravo_write := .t., pravo_read := .t., ;
@@ -63,6 +63,10 @@ FUNCTION load_public()
        DemoMode := .f., picture_pf := '@R 999-999-999 99', ;
        pict_cena := '9999999.99', forever := 'forever'
   PUBLIC yes_color := .t.
+
+  Public tmp_ini := cur_dir() + 'tmp' + sini
+  Public tools_ini := dir_server() + 'tools' + sini
+  Public local_tools_ini := cur_dir() + 'loctools' + sini
 
   PUBLIC color0, color1, cColorWait, cColorSt2Msg, cColorStMsg, ;
        cCalcMain, cHelpCMain, cColorText, ;
@@ -123,17 +127,16 @@ FUNCTION load_public()
 Function f_main(r0)
   Static arr1 := {;
     {'Пароли на откат реестров'             , X_PASSWORD, , .t., 'ПАРОЛИ'}, ;
-    {'Услуги'                               , X_SERVICE, , .t., 'СПРАВОЧНИК УСЛУГ'}, ;
-    {'Обязательное медицинское страхование', X_OMS   , , .t., 'ОМС'}, ;
-    {'Учёт направлений на госпитализацию'  , X_263   , , .f., 'ГОСПИТАЛИЗАЦИЯ'}, ;
-    {'Платные услуги'                      , X_PLATN , , .t., 'ПЛАТНЫЕ УСЛУГИ'}, ;
-    {'Ортопедические услуги в стоматологии', X_ORTO  , , .t., 'ОРТОПЕДИЯ'}, ;
-    {'Касса медицинской организации'       , X_KASSA , , .t., 'КАССА'}, ;
-    {'КЭК медицинской организации'         , X_KEK   , , .f., 'КЭК'} ;
+    {'Услуги'                               , X_SERVICE, , .t., 'СПРАВОЧНИК УСЛУГ'} ;
   }
-  Local i, lens := 0, r, c, oldTfoms, arr, ar, k
+    // {'Обязательное медицинское страхование', X_OMS   , , .t., 'ОМС'}, ;
+    // {'Учёт направлений на госпитализацию'  , X_263   , , .f., 'ГОСПИТАЛИЗАЦИЯ'}, ;
+    // {'Платные услуги'                      , X_PLATN , , .t., 'ПЛАТНЫЕ УСЛУГИ'}, ;
+    // {'Ортопедические услуги в стоматологии', X_ORTO  , , .t., 'ОРТОПЕДИЯ'}, ;
+    // {'Касса медицинской организации'       , X_KASSA , , .t., 'КАССА'}, ;
+    // {'КЭК медицинской организации'         , X_KEK   , , .f., 'КЭК'} ;
+  Local i, lens := 0, r, c, arr, ar, k
   local buf
-  local a_parol := {}
 
   PUBLIC array_tasks := {}
   for i := 1 to len(arr1)
@@ -148,13 +151,12 @@ Function f_main(r0)
       //  first_message, func_menu, cmain_menu
   // вывести верхние строки главного экрана
   r0 := main_up_screen()
-  // вывести центральные строки главного экрана
-  main_center_screen(r0, a_parol)
     //
   r := int((maxrow() - r0 - len(arr1)) / 2) - 1
   c := int((maxcol() + 1 - lens) / 2) - 1
-  // ar := GetIniSect(tmp_ini, 'task')
-  // k := i := int(val(a2default(ar, 'current_task', lstr(X_OMS))))
+
+  ar := GetIniSect(tmp_ini, 'task')
+  k := i := int(val(a2default(ar, 'current_task', lstr(X_SERVICE))))
   do while .t.
     if (i := popup_2array(arr1, r + r0, c, i, , , 'Выбор задачи', 'B+/W', 'N+/W, W+/N*')) == 0
       exit
@@ -167,7 +169,7 @@ Function f_main(r0)
     @ r0, 0 say full_date(sys_date) color 'W+/N' // перевывести дату
     @ r0, maxcol() - 4 say hour_min(seconds()) color 'W+/N' // перевывести время
   enddo
-  // SetIniSect(tmp_ini, 'task', {{'current_task', lstr(k)}})
+  SetIniSect(tmp_ini, 'task', {{'current_task', lstr(k)}})
   return NIL
 
 // вывести верхние строки главного экрана
@@ -188,60 +190,20 @@ Function main_up_screen()
   @ k + 1, maxcol() - 4 say hour_min(seconds()) color 'W+/N'
   return k + 1
 
-// вывести центральные строки главного экрана
-Function main_center_screen(r0, a_parol)
-  // Static nLen := 11
-  // Static arr_name := {'инфаркт', 'инсульт', 'ЧМТ', 'онкология', ;
-  //                   'пневмония', 'язва', 'родовая травма', ;
-  //                   'новорожденный с низкой массой тела', ;
-  //                   'астма', 'диабет','панкреатит'}
-  // Local s, i, c, k, t_arr, r1, buf, mst := ''
+// 27.07.23
+FUNCTION end_app()
+  Static group_ini := 'RAB_MESTO'
 
-  // g_arr_stand := {}
-  // if valtype(glob_mo[_MO_STANDART]) == 'A'
-  //   for k := 1 to len(glob_mo[_MO_STANDART])
-  //     t_arr := {glob_mo[_MO_STANDART,k, 1], {}}
-  //     mst := padr(glob_mo[_MO_STANDART,k, 2], nLen)
-  //     for i := 1 to nLen
-  //       c := substr(mst, i, 1)
-  //       if c == '1'
-  //         aadd(t_arr[2], i)
-  //       endif
-  //     next
-  //     aadd(g_arr_stand,aclone(t_arr))
-  //   next
-  // endif
-  // if .t.//empty(mst)
-  //   if valtype(a_parol) == 'A' .and. (k := len(a_parol)) > 0
-  //     r1 := r0 + int((maxrow() - r0 - k) / 2) - 1
-  //     n_message(a_parol, , 'W+/W*', 'R/W*', r1, , 'N+/W*')
-  //   endif
-  // else
-  //   s := 'Нозологические формы, по которым МО участвует в выполнении стандартов:'
-  //   for i := 1 to nLen
-  //     c := substr(mst, i, 1)
-  //     if eq_any(c, '1', '2')
-  //       s += ' ' + arr_name[i]
-  //       if c == '2'
-  //         s += '[*]'
-  //       endif
-  //       s += ','
-  //     endif
-  //   next
-  //   s := left(s, len(s) - 1)
-  //   t_arr := array(2)
-  //   k := perenos(t_arr, s, 64)
-  //   r1 := r0+int((maxrow() - r0 - k) / 2) - 1
-  //   if (k := len(a_parol)) > 0
-  //     if r1 - r0 < k + 4
-  //       r1 := r0 + k + 4
-  //     endif
-  //     buf := save_box(r1 - k - 4, 0, r1 - 1, maxcol())
-  //     f_message(a_parol, , 'W+/W*', 'R/W*', r1 - k - 3)
-  //   endif
-  //   n_message(t_arr, , 'W/W', 'N/W', r1, , 'N+/W')
-  //   if buf != NIL
-  //     rest_box(buf)
-  //   endif
-  // endif
-  return NIL
+  //
+	filedelete(cur_dir() + 'tmp*.dbf')
+	filedelete(cur_dir() + 'tmp*.ntx')
+  // удалим файлы отчетов в формате '*.HTML' из временной директории
+  filedelete( HB_DirTemp() + '*.html')
+  SET KEY K_ALT_F3 TO
+  SET KEY K_ALT_F2 TO
+  SET KEY K_ALT_X  TO
+  SET COLOR TO
+  SET CURSOR ON
+  CLS
+  QUIT
+  RETURN NIL
