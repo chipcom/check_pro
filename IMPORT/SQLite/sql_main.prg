@@ -17,12 +17,14 @@ function run_sqlimport()
   local lUpdate := .f.
   local file, name_table, cFunc, cMask := '*.xml'
   local fError, fOut
+  local buf := SaveScreen()
 
   REQUEST HB_CODEPAGE_UTF8
   REQUEST HB_CODEPAGE_RU1251
   REQUEST HB_LANG_RU866
   // HB_CDPSELECT('UTF8')
 
+  waitStatus()
   fError := TFileText():New(cur_dir() + 'error.log', , .t., , .t.)
   fOut := TFileText():New(cur_dir() + 'output.log', , .t., , .t.)
 
@@ -60,12 +62,12 @@ function run_sqlimport()
     sqlite3_exec(db, 'PRAGMA auto_vacuum=0')
     sqlite3_exec(db, 'PRAGMA page_size=4096')
 
+    make_V0xx(db, source, fOut, fError)
     make_O0xx(db, source, fOut, fError)
-    // make_Q0xx(db, source)
-    // make_F0xx(db, source)
-    // make_V0xx(db, source)
-    // make_mzdrav(db, source)
-    // make_other(db, source)
+    make_Q0xx(db, source, fOut, fError)
+    // make_F0xx(db, source, fOut, fError)
+    // make_mzdrav(db, source, fOut, fError)
+    // make_other(db, source, fOut, fError)
 
     db := sqlite3_open_v2( nameDB, SQLITE_OPEN_READWRITE + SQLITE_OPEN_EXCLUSIVE )
     if ! Empty( db )
@@ -77,4 +79,5 @@ function run_sqlimport()
     endif
   endif
 
+  RestScreen(buf)
   return nil

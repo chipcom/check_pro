@@ -78,19 +78,7 @@ Function make_O001(db, source, fOut, fError)
           endif
           mAlfa2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'ALFA2')
           mAlfa3 := read_xml_stroke_1251_to_utf8(oXmlNode, 'ALFA3')
-          // Set( _SET_DATEFORMAT, 'dd-mm-yyyy' )
-          // d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEUTV'))
-          // Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          // d1 := hb_ValToStr(d1_1)
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEVVED') // не используем
 
-          // if sqlite3_bind_text(stmt, 1, mKod) == SQLITE_OK .AND. ;
-          //   sqlite3_bind_text(stmt, 2, mName11) == SQLITE_OK .AND. ;
-          //   sqlite3_bind_text(stmt, 3, mName12) == SQLITE_OK .AND. ;
-          //   sqlite3_bind_text(stmt, 4, mAlfa2) == SQLITE_OK .AND. ;
-          //   sqlite3_bind_text(stmt, 5, mAlfa3) == SQLITE_OK .AND. ;
-          //   sqlite3_bind_text(stmt, 6, d1) == SQLITE_OK .AND. ;
-          //   sqlite3_bind_text(stmt, 7, d2) == SQLITE_OK
           if sqlite3_bind_text(stmt, 1, mKod) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 2, mName11) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 3, mName12) == SQLITE_OK .AND. ;

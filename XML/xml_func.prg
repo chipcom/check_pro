@@ -1,32 +1,37 @@
 #include 'function.ch'
 
 function read_xml_stroke_1251_to_utf8(node, title)
-  return hb_strToUTF8(mo_read_xml_stroke(node, title, , , 'win1251'), 'RU866')
+  local stroke
 
-***** —Å—Ç—Ä–æ–∫–∞ –¥–∞—Ç—ã –¥–ª—è XML-—Ñ–∞–π–ª–∞
+  stroke := mo_read_xml_stroke(node, title)
+  // return hb_strToUTF8(mo_read_xml_stroke(node, title, , , 'win1251'), 'RU866')
+  // return hb_strToUTF8(mo_read_xml_stroke(node, title, , , 'win1251'), 'RU1251')
+  return Hb_Translate( stroke, 'RU1251', 'CP866')
+
+// ·‚‡Æ™† §†‚Î §´Ô XML-‰†©´†
 Function date2xml(mdate)
   return strzero(year(mdate), 4) + '-' + ;
      strzero(month(mdate), 2) + '-' + ;
      strzero(day(mdate), 2)
 
-***** –ø—Ä–µ–±—Ä–∞–∑–æ–≤–∞—Ç—å –¥–∞—Ç—É –∏–∑ "2002-02-01" –≤ —Ç–∏–ø "DATE"
+// Ø‡•°‡†ßÆ¢†‚Ï §†‚„ ®ß "2002-02-01" ¢ ‚®Ø "DATE"
 Function xml2date(s)
   return stod(charrem('-', s))
 
-***** –ø—Ä–æ–≤–µ—Ä–∏—Ç—å –Ω–∞–ª–∏—á–∏–µ –≤ XML-—Ñ–∞–π–ª–µ —Ç—ç–≥–∞ –∏ –≤–µ—Ä–Ω—É—Ç—å –µ–≥–æ –∑–Ω–∞—á–µ–Ω–∏–µ
+// Ø‡Æ¢•‡®‚Ï ≠†´®Á®• ¢ XML-‰†©´• ‚Ì£† ® ¢•‡≠„‚Ï •£Æ ß≠†Á•≠®•
 Function mo_read_xml_stroke(_node, _title, _aerr, _binding, _codepage)
-  // _node - —É–∫–∞–∑–∞—Ç–µ–ª—å –Ω–∞ —É–∑–µ–ª
-  // _title - –Ω–∞–∏–º–µ–Ω–æ–≤–∞–Ω–∏–µ —Ç—ç–≥–∞
-  // _aerr - –º–∞—Å—Å–∏–≤ —Å–æ–æ–±—â–µ–Ω–∏–π –æ–± –æ—à–∏–±–∫–∞—Ö
-  // _binding - –æ–±—è–∑–∞—Ç–µ–ª–µ–Ω –ª–∏ –∞—Ç—Ä–∏–±—É—Ç (–ø–æ-—É–º–æ–ª—á–∞–Ω–∏—é .T.)
-  // _codepage - –∫–æ–¥–∏—Ä–æ–≤–∫–∞ –ø–µ—Ä–µ–¥–∞–Ω–Ω–æ–π —Å—Ç—Ä–æ–∫–∏
+  // _node - „™†ß†‚•´Ï ≠† „ß•´
+  // _title - ≠†®¨•≠Æ¢†≠®• ‚Ì£†
+  // _aerr - ¨†··®¢ ·ÆÆ°È•≠®© Æ° ÆË®°™†Â
+  // _binding - Æ°Ôß†‚•´•≠ ´® †‚‡®°„‚ (ØÆ-„¨Æ´Á†≠®Ó .T.)
+  // _codepage - ™Æ§®‡Æ¢™† Ø•‡•§†≠≠Æ© ·‚‡Æ™®
   Local ret := '', oNode, yes_err := (valtype(_aerr) == 'A'), ;
-    s_msg := '–û—Ç—Å—É—Ç—Å—Ç–≤—É–µ—Ç –∑–Ω–∞—á–µ–Ω–∏–µ –æ–±—è–∑–∞—Ç–µ–ª—å–Ω–æ–≥–æ —Ç—ç–≥–∞ "' + _title + '"'
+    s_msg := 'é‚·„‚·‚¢„•‚ ß≠†Á•≠®• Æ°Ôß†‚•´Ï≠Æ£Æ ‚Ì£† "' + _title + '"'
 
   DEFAULT _binding TO .t., _aerr TO {}
 
   DEFAULT _codepage TO 'WIN1251'
-  // –∏—â–µ–º –Ω–µ–æ–±—Ö–æ–¥–∏–º—ã–π "_title" —Ç—ç–≥ –≤ —É–∑–ª–µ "_node"
+  // ®È•¨ ≠•Æ°ÂÆ§®¨Î© "_title" ‚Ì£ ¢ „ß´• "_node"
   oNode := _node:Find(_title)
   if oNode == NIL .and. _binding .and. yes_err
     aadd(_aerr, s_msg)
@@ -36,14 +41,14 @@ Function mo_read_xml_stroke(_node, _title, _aerr, _binding, _codepage)
   endif
   return ret
 
-***** –≤–µ—Ä–Ω—É—Ç—å –∑–Ω–∞—á–µ–Ω–∏–µ —Ç—ç–≥–∞
+// ¢•‡≠„‚Ï ß≠†Á•≠®• ‚Ì£†
 Function mo_read_xml_tag(oNode, _aerr, _binding, _codepage)
-  // oNode - —É–∫–∞–∑–∞—Ç–µ–ª—å –Ω–∞ —É–∑–µ–ª
-  // _aerr - –º–∞—Å—Å–∏–≤ —Å–æ–æ–±—â–µ–Ω–∏–π –æ–± –æ—à–∏–±–∫–∞—Ö
-  // _binding - –æ–±—è–∑–∞—Ç–µ–ª–µ–Ω –ª–∏ –∞—Ç—Ä–∏–±—É—Ç (–ø–æ-—É–º–æ–ª—á–∞–Ω–∏—é .T.)
-  // _codepage - –∫–æ–¥–∏—Ä–æ–≤–∫–∞ –ø–µ—Ä–µ–¥–∞–Ω–Ω–æ–π —Å—Ç—Ä–æ–∫–∏
-  Local ret := '', c, yes_err := (valtype(_aerr) == 'A'),;
-    s_msg := '–û—Ç—Å—É—Ç—Å—Ç–≤—É–µ—Ç –∑–Ω–∞—á–µ–Ω–∏–µ –æ–±—è–∑–∞—Ç–µ–ª—å–Ω–æ–≥–æ —Ç—ç–≥–∞ "' + oNode:title + '"'
+  // oNode - „™†ß†‚•´Ï ≠† „ß•´
+  // _aerr - ¨†··®¢ ·ÆÆ°È•≠®© Æ° ÆË®°™†Â
+  // _binding - Æ°Ôß†‚•´•≠ ´® †‚‡®°„‚ (ØÆ-„¨Æ´Á†≠®Ó .T.)
+  // _codepage - ™Æ§®‡Æ¢™† Ø•‡•§†≠≠Æ© ·‚‡Æ™®
+  Local ret := '', c, yes_err := (valtype(_aerr) == 'A'), ;
+    s_msg := 'é‚·„‚·‚¢„•‚ ß≠†Á•≠®• Æ°Ôß†‚•´Ï≠Æ£Æ ‚Ì£† "' + oNode:title + '"'
   local codepage := upper(_codepage)
 
   if empty(oNode:aItems)
@@ -51,18 +56,18 @@ Function mo_read_xml_tag(oNode, _aerr, _binding, _codepage)
       aadd(_aerr, s_msg)
     endif
   elseif (c := valtype(oNode:aItems[1])) == 'C'
-    if codepage == 'WIN1251'
-      ret := hb_AnsiToOem(alltrim(oNode:aItems[1]))
-    elseif codepage == 'RU1251'
-      // ret := hb_strToUTF8(alltrim(oNode:aItems[1]), 'ru1251')
-      if HB_ISSTRING(oNode:aItems[1])
-        ret := alltrim(hb_strToUTF8(oNode:aItems[1]), 'ru1251')
-      endif
-    elseif codepage == 'UTF8'
+    // if codepage == 'WIN1251'
+    //   ret := hb_AnsiToOem(alltrim(oNode:aItems[1]))
+    // elseif codepage == 'RU1251'
+    //   // ret := hb_strToUTF8(alltrim(oNode:aItems[1]), 'ru1251')
+    //   if HB_ISSTRING(oNode:aItems[1])
+    //     ret := alltrim(hb_strToUTF8(oNode:aItems[1]), 'ru1251')
+    //   endif
+    // elseif codepage == 'UTF8'
       // ret := hb_Utf8ToStr( alltrim(oNode:aItems[1]), 'RU866' )	
       ret := alltrim(oNode:aItems[1])
-    endif
+    // endif
   elseif yes_err
-    aadd(_aerr, '–ù–µ–≤–µ—Ä–Ω—ã–π —Ç–∏–ø –¥–∞–Ω–Ω—ã—Ö —É —Ç—ç–≥–∞ "' + oNode:title + '": "' + c + '"')
+    aadd(_aerr, 'ç•¢•‡≠Î© ‚®Ø §†≠≠ÎÂ „ ‚Ì£† "' + oNode:title + '": "' + c + '"')
   endif
   return ret

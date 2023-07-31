@@ -44,3 +44,5 @@ Errorsys.prg
 .\XML\xml_func.prg
 .\IMPORT\SQLite\sql_main.prg
 .\IMPORT\SQLite\o0xx_sql.prg
+.\IMPORT\SQLite\q0xx_sql.prg
+.\IMPORT\SQLite\v0xx_sql.prg
