@@ -7,33 +7,33 @@ function out_error(fp, nError, nfile, j, k)
 
   do case
     case nError == FILE_NOT_EXIST
-      fp.add_string('╨д╨░╨╣╨╗ ', nfile, ' ╨╜╨╡ ╤Б╤Г╤Й╨╡╤Б╤В╨▓╤Г╨╡╤В')
+      fp:add_string('Файл ', nfile, ' не существует')
     case nError == FILE_READ_ERROR
-      fp.add_string('╨Ю╤И╨╕╨▒╨║╨░ ╨▓ ╨╖╨░╨│╤А╤Г╨╖╨║╨╡ ╤Д╨░╨╣╨╗╨░ ', nfile)
+      fp:add_string('Ошибка в загрузке файла ', nfile)
     case nError == FILE_RENAME_ERROR
-      fp.add_string('╨Ю╤И╨╕╨▒╨║╨░ ╨┐╨╡╤А╨╡╨╕╨╝╨╡╨╜╨╛╨▓╨░╨╜╨╕╤П ╤Д╨░╨╣╨╗╨░ ', nfile)
+      fp:add_string('Ошибка переименования файла ', nfile)
     case nError == DIR_IN_NOT_EXIST
-      fp.add_string('╨Ъ╨░╤В╨░╨╗╨╛╨│ ╨╕╤Б╤Е╨╛╨┤╨╜╤Л╤Е ╨┤╨░╨╜╨╜╤Л╤Е "', nfile, '" ╨╜╨╡ ╤Б╤Г╤Й╨╡╤Б╤В╨▓╤Г╨╡╤В. ╨Я╤А╨╛╨┤╨╛╨╗╨╢╨╡╨╜╨╕╨╡ ╤А╨░╨▒╨╛╤В╤Л ╨╜╨╡ ╨▓╨╛╨╖╨╝╨╛╨╢╨╜╨╛!')
+      fp:add_string('Каталог исходных данных "', nfile, '" не существует. Продолжение работы не возможно!')
     case nError == DIR_OUT_NOT_EXIST
-      fp.add_string('╨Ъ╨░╤В╨░╨╗╨╛╨│ ╨┤╨╗╤П ╨▓╤Л╤Е╨╛╨┤╨╜╤Л╤Е ╨┤╨░╨╜╨╜╤Л╤Е "', nfile, '" ╨╜╨╡ ╤Б╤Г╤Й╨╡╤Б╤В╨▓╤Г╨╡╤В. ╨Я╤А╨╛╨┤╨╛╨╗╨╢╨╡╨╜╨╕╨╡ ╤А╨░╨▒╨╛╤В╤Л ╨╜╨╡ ╨▓╨╛╨╖╨╝╨╛╨╢╨╜╨╛!')
+      fp:add_string('Каталог для выходных данных "', nfile, '" не существует. Продолжение работы не возможно!')
     case nError == TAG_YEAR_REPORT
-      fp.add_string('╨Ю╤И╨╕╨▒╨║╨░ ╨┐╤А╨╕ ╤З╤В╨╡╨╜╨╕╨╕ ╤Д╨░╨╣╨╗╨░ "', nfile, '". ╨Э╨╡╨║╨╛╤А╤А╨╡╨║╤В╨╜╨╛╨╡ ╨╖╨╜╨░╤З╨╡╨╜╨╕╨╡ ╤В╨╡╨│╨░ YEAR_REPORT ', j)
+      fp:add_string('Ошибка при чтении файла "', nfile, '". Некорректное значение тега YEAR_REPORT ', j)
     case nError == TAG_PLACE_ERROR
-      fp.add_string('╨Ю╤И╨╕╨▒╨║╨░ ╨┐╤А╨╕ ╤З╤В╨╡╨╜╨╕╨╕ ╤Д╨░╨╣╨╗╨░ "', nfile, '" - ╨▒╨╛╨╗╨╡╨╡ ╨╛╨┤╨╜╨╛╨│╨╛ ╤В╨╡╨│╨░ PLACE ╨▓ ╨╛╤В╨┤╨╡╨╗╨╡╨╜╨╕╨╕: ', alltrim(j))
+      fp:add_string('Ошибка при чтении файла "', nfile, '" - более одного тега PLACE в отделении: ', alltrim(j))
     case nError == TAG_PERIOD_ERROR
-      fp.add_string('╨Ю╤И╨╕╨▒╨║╨░ ╨┐╤А╨╕ ╤З╤В╨╡╨╜╨╕╨╕ ╤Д╨░╨╣╨╗╨░ "', nfile, '" - ╨▒╨╛╨╗╨╡╨╡ ╨╛╨┤╨╜╨╛╨│╨╛ ╤В╨╡╨│╨░ PERIOD ╨▓ ╤Г╤З╤А╨╡╨╢╨┤╨╡╨╜╨╕╨╕: ', j, ' ╨▓ ╤Г╤Б╨╗╤Г╨│╨╡ ', k)
+      fp:add_string('Ошибка при чтении файла "', nfile, '" - более одного тега PERIOD в учреждении: ', j, ' в услуге ', k)
     case nError == TAG_VALUE_EMPTY
-      fp.add_string('╨Ч╨░╨╝╨╡╤З╨░╨╜╨╕╨╡ ╨┐╤А╨╕ ╤З╤В╨╡╨╜╨╕╨╕ ╤Д╨░╨╣╨╗╨░ "', nfile, '" - ╨┐╤Г╤Б╤В╨╛╨╡ ╨╖╨╜╨░╤З╨╡╨╜╨╕╨╡ ╤В╨╡╨│╨░ VALUE/LEVEL: ', j, ' ╨▓ ╤Г╤Б╨╗╤Г╨│╨╡ ', k)
+      fp:add_string('Замечание при чтении файла "', nfile, '" - пустое значение тега VALUE/LEVEL: ', j, ' в услуге ', k)
     case nError == TAG_VALUE_INVALID
-      fp.add_string('╨Ч╨░╨╝╨╡╤З╨░╨╜╨╕╨╡ ╨┐╤А╨╕ ╤З╤В╨╡╨╜╨╕╨╕ ╤Д╨░╨╣╨╗╨░ "', nfile, '" - ╨╜╨╡╨║╨╛╤А╤А╨╡╨║╤В╨╜╨╛╨╡ ╨╖╨╜╨░╤З╨╡╨╜╨╕╨╡ ╤В╨╡╨│╨░ VALUE/LEVEL: ', j, ' ╨▓ ╤Г╤Б╨╗╤Г╨│╨╡ ', k)
+      fp:add_string('Замечание при чтении файла "', nfile, '" - некорректное значение тега VALUE/LEVEL: ', j, ' в услуге ', k)
     case nError == TAG_ROW_INVALID
-      fp.add_string('╨Ю╤И╨╕╨▒╨║╨░ ╨┐╤А╨╕ ╨╖╨░╨│╤А╤Г╨╖╨║╨╕ ╤Б╤В╤А╨╛╨║╨╕ - ', j, ' ╨╕╨╖ ╤Д╨░╨╣╨╗╨░ ', nfile)
+      fp:add_string('Ошибка при загрузки строки - ', j, ' из файла ', nfile)
     case nError == UPDATE_TABLE_ERROR
-      fp.add_string('╨Ю╤И╨╕╨▒╨║╨░ ╨╛╨▒╨╜╨╛╨▓╨╗╨╡╨╜╨╕╤П ╨╖╨░╨┐╨╕╤Б╨╡╨╣ ╨▓ ╤В╨░╨▒╨╗╨╕╤Ж╨╡ - ', nfile)
+      fp:add_string('Ошибка обновления записей в таблице - ', nfile)
     case nError == PACK_ERROR
-      fp.add_string('╨Ю╤И╨╕╨▒╨║╨░ ╨┐╤А╨╕ ╨╛╤З╨╕╤Б╤В╨║╨╕ ╨С╨Ф - ', nfile)
+      fp:add_string('Ошибка при очистки БД - ', nfile)
     case nError == INVALID_COMMAND_LINE
-      fp.add_string('╨б╨╛╨▓╨╝╨╡╤Б╤В╨╜╨╛╨╡ ╨╕╤Б╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╨╜╨╕╨╡ ╨╛╨┐╤Ж╨╕╨╣ -all ╨╕ -update ╨╜╨╡╨┤╨╛╨┐╤Г╤Б╤В╨╕╨╝╨╛')
+      fp:add_string('Совместное использование опций -all и -update недопустимо')
   end case
 
   return nil
