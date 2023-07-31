@@ -69,17 +69,21 @@ function begin_task_services()
   endif
   return _arr
 
-// 25.07.23
+// 31.07.23
 Function f1_mo_mo(oBrow)
-  Local n := 56
+  Local n := 50
   Local oColumn, blk := {|_c| _c := f0_mo_mo(), {{1, 2}, {3, 4}, {5, 6}, {7, 8}, {9, 10}}[_c]}
+
+  oColumn := TBColumnNew(center('Код ТФОМС', 10), {|| left(_MO_MO->CODEM, 10)})
+  oColumn:colorBlock := blk
+  oBrow:addColumn(oColumn)
   oColumn := TBColumnNew(center('Наименование организации', n), {|| left(_MO_MO->NAMES, n)})
   oColumn:colorBlock := blk
   oBrow:addColumn(oColumn)
   status_key('^<Esc>^ выход ^<Enter>^ выбор ^<F2>^ поиск')
   return NIL
   
-// 25.07.23
+// 31.07.23
 Function f0_mo_mo()
   Local k := 3, v1, v2, fl1del, fl2del  // , s := iif(empty(usl->shifr1), usl->shifr, usl->shifr1)
 
@@ -90,16 +94,16 @@ Function f0_mo_mo()
   //   k := 4  // найдена, но нет цены
   //   v1 := fcena_oms(lusl->shifr, .t., sys_date, @fl1del)
   //   v2 := fcena_oms(lusl->shifr, .f., sys_date, @fl2del)
-  //   if fl1del .and. fl2del
-  //     k := 5  // удалена
+    if _MO_MO->DEND < sys_date
+      k := 5  // удалена
   //   elseif !emptyall(v1, v2)
   //     k := 1  // есть цена
   //   endif
   // elseif !emptyall(usl->pcena, usl->pcena_d, usl->dms_cena)
   //   k := 2  // есть платная цена
-  // endif
+    endif
   // select USL
-  return k
+    return k
   
 // 25.07.23
 Function f2_mo_mo(nKey, oBrow)

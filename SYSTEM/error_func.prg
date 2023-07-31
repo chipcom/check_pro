@@ -1,38 +1,39 @@
 #include 'function.ch'
+#include 'tfile.ch'
 #include '.\dict_error.ch'
 
-// 06.06.22
-function out_error(nError, nfile, j, k)
+// 31.07.23
+function out_error(fp, nError, nfile, j, k)
 
   do case
     case nError == FILE_NOT_EXIST
-      OutErr('Файл ', nfile, ' не существует', hb_eol())
+      fp.add_string('Файл ', nfile, ' не существует')
     case nError == FILE_READ_ERROR
-      OutErr('Ошибка в загрузке файла ', nfile, hb_eol())
+      fp.add_string('Ошибка в загрузке файла ', nfile)
     case nError == FILE_RENAME_ERROR
-      OutErr('Ошибка переименования файла ', nfile, hb_eol())
+      fp.add_string('Ошибка переименования файла ', nfile)
     case nError == DIR_IN_NOT_EXIST
-      OutErr('Каталог исходных данных "', nfile, '" не существует. Продолжение работы не возможно!', hb_eol())
+      fp.add_string('Каталог исходных данных "', nfile, '" не существует. Продолжение работы не возможно!')
     case nError == DIR_OUT_NOT_EXIST
-      OutErr('Каталог для выходных данных "', nfile, '" не существует. Продолжение работы не возможно!', hb_eol())
+      fp.add_string('Каталог для выходных данных "', nfile, '" не существует. Продолжение работы не возможно!')
     case nError == TAG_YEAR_REPORT
-        OutErr('Ошибка при чтении файла "', nfile, '". Некорректное значение тега YEAR_REPORT ', j, hb_eol())
+      fp.add_string('Ошибка при чтении файла "', nfile, '". Некорректное значение тега YEAR_REPORT ', j)
     case nError == TAG_PLACE_ERROR
-        OutErr('Ошибка при чтении файла "', nfile, '" - более одного тега PLACE в отделении: ', alltrim(j), hb_eol())
+      fp.add_string('Ошибка при чтении файла "', nfile, '" - более одного тега PLACE в отделении: ', alltrim(j))
     case nError == TAG_PERIOD_ERROR
-        OutErr('Ошибка при чтении файла "', nfile, '" - более одного тега PERIOD в учреждении: ', j, ' в услуге ', k, hb_eol())
+      fp.add_string('Ошибка при чтении файла "', nfile, '" - более одного тега PERIOD в учреждении: ', j, ' в услуге ', k)
     case nError == TAG_VALUE_EMPTY
-        OutErr('Замечание при чтении файла "', nfile, '" - пустое значение тега VALUE/LEVEL: ', j, ' в услуге ', k, hb_eol())
+      fp.add_string('Замечание при чтении файла "', nfile, '" - пустое значение тега VALUE/LEVEL: ', j, ' в услуге ', k)
     case nError == TAG_VALUE_INVALID
-        OutErr('Замечание при чтении файла "', nfile, '" - некорректное значение тега VALUE/LEVEL: ', j, ' в услуге ', k, hb_eol())
+      fp.add_string('Замечание при чтении файла "', nfile, '" - некорректное значение тега VALUE/LEVEL: ', j, ' в услуге ', k)
     case nError == TAG_ROW_INVALID
-        OutErr('Ошибка при загрузки строки - ', j, ' из файла ',nfile, hb_eol())
+      fp.add_string('Ошибка при загрузки строки - ', j, ' из файла ', nfile)
     case nError == UPDATE_TABLE_ERROR
-        OutErr('Ошибка обновления записей в таблице - ', nfile, hb_eol())
+      fp.add_string('Ошибка обновления записей в таблице - ', nfile)
     case nError == PACK_ERROR
-        OutErr('Ошибка при очистки БД - ', nfile, hb_eol())
+      fp.add_string('Ошибка при очистки БД - ', nfile)
     case nError == INVALID_COMMAND_LINE
-        OutErr('Совместное использование опций -all и -update недопустимо', hb_eol())
+      fp.add_string('Совместное использование опций -all и -update недопустимо')
   end case
 
   return nil
