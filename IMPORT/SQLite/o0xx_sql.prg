@@ -2,7 +2,7 @@
 #include '.\dict_error.ch'
 
 #require 'hbsqlit3'
-
+#define COMMIT_COUNT  500
 // 09.08.23
 function make_O0xx(db, source, fOut, fError)
 
@@ -101,21 +101,21 @@ Function make_O001(db, source, fOut, fError)
 
 // 09.08.23
 Function make_O002(db, source, fOut, fError)
-  // KOD,     "C",    3,      0
-  // NAME11,  "C",  250,      0
-  // NAME12", "C",  250,      0
-  // ALFA2,   "C",    2,      0
-  // ALFA3,   "C",    3,      0
-  // DATEBEG, "D",    8,      0
-  // DATEEND, "D",    8,      0
-
   local stmt
   local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1, oNode2
-  local mTer, mName1, mKod1, mKod2, mKod3, mRazdel, mCentrum
-  local mOKATO, mFl_zagol, mTip, mFl_vibor, mSelo, valKod1
+  local mTer, mName1, mKod1, mKod2, mKod3, mRazdel
+  local mOKATO, mFl_zagol := 0, mTip := 0, mFl_vibor := 0, mSelo := 0
+  local valKod1 := 0, valKod2 := 0
+  local mCentrum, aTemp
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local count := 0, cmdSeloText := textBeginTrans
+  local count18 := 0, cmdSelo18 := textBeginTrans
+  local countRegion := 0, cmdRegionText := textBeginTrans
+  local countCity := 0, cmdCityText := textBeginTrans
+  local countCity18 := 0, cmdCity18 := textBeginTrans
 
   cmdText := 'CREATE TABLE _okator(okato TEXT(2), name TEXT(72))'
 
@@ -194,9 +194,6 @@ Function make_O002(db, source, fOut, fError)
     out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
-    // cmdText := "INSERT INTO _okator (okato, name) VALUES( :okato, :name )"
-    // stmt := sqlite3_prepare(db, cmdText)
-    // if ! Empty(stmt)
       // out_obrabotka(nfile)
       k := Len( oXmlDoc:aItems[1]:aItems )
       for j := 1 to k
@@ -207,31 +204,29 @@ Function make_O002(db, source, fOut, fError)
           mKod2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD2')
           mKod3 := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD3')
           mRazdel := read_xml_stroke_1251_to_utf8(oXmlNode, 'RAZDEL')
-          // mCentrum := read_xml_stroke_1251_to_utf8(oXmlNode, 'CENTRUM')
           mName1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'NAME1')
+          mCentrum := read_xml_stroke_1251_to_utf8(oXmlNode, 'CENTRUM')
+          valKod1 := val(mKod1)
+          valKod2 := val(mKod2)
 
           if mTer != '00' .and. mKod1 == '000' .and. mKod2 == '000' .and. mKod3 == '000' .and. ;
                       alltrim(mRazdel) == '1'
-            cmdText := "INSERT INTO _okator (okato, name) VALUES( :okato, :name )"
-            stmt := sqlite3_prepare(db, cmdText)
-            if sqlite3_bind_text(stmt, 1, mTer) == SQLITE_OK .AND. ;
-                sqlite3_bind_text(stmt, 2, mName1) == SQLITE_OK
-              if sqlite3_step(stmt) != SQLITE_DONE
-                out_error(fError, TAG_ROW_INVALID, nfile, j)
-              endif
+            countRegion++
+            cmdRegionText += 'INSERT INTO _okator (okato, name) VALUES(' ;
+                    + "'" + mTer +"'," ;
+                    +  "'" + mName1 + "');"
+            if countRegion == COMMIT_COUNT
+              cmdRegionText += "COMMIT;"
+              sqlite3_exec(db, cmdRegionText)
+              countRegion := 0
+              cmdRegionText := textBeginTrans
             endif
-            sqlite3_reset(stmt)
           endif
+
           if mKod1 != '000' .and. mKod2 == '000' .and. mKod3 == '000' .and. ;
                 alltrim(mRazdel) == '1'
-            cmdText := "INSERT INTO _okatoo (okato, name, fl_vibor, fl_zagol, tip, selo) VALUES( :okato, :name, :fl_vibor, :fl_zagol, :tip, :selo )"
-            stmt := sqlite3_prepare(db, cmdText)
-
-            valKod1 := val(mKod1)
-            // rajon->name   := padr(charrem("/",okato->name1),72)
             if eq_any(alltrim(mKod1), '110', '120', '130', '140', '150', '170', '200', ;
                                 '400' , '500', '550')
-              // rajon->fl_zagol := 1
               mFl_zagol := 1
             endif
             if valKod1 < 200     // округа
@@ -280,31 +275,138 @@ Function make_O002(db, source, fOut, fError)
             else                          // федеральные города
               mSelo := 1
             endif
+
+            mOKATO  := mTer + mKod1
+            mFl_vibor := 0
+  
+            countCity++
+            cmdCityText += 'INSERT INTO _okatoo (okato, name, fl_vibor, fl_zagol, tip, selo) VALUES(' ;
+                  + "'" + mOKATO + "'," ;
+                  +  "'" + mName1 + "'," ;
+                  + str(mFl_vibor, 1) + "," ;
+                  + str(mFl_zagol, 1) + "," ;
+                  + str(mTip, 1) + "," ;
+                  + str(mSelo, 1) + ");"
+            if count == COMMIT_COUNT
+              cmdCityText += "COMMIT;"
+              sqlite3_exec(db, cmdCityText)
+              countCity := 0
+              cmdCityText := textBeginTrans
+            endif
+
+            if mTer == '18' // для Волгоградской области
+              countCity18++
+              cmdCity18 += 'INSERT INTO _okatoo8 (okato, name, fl_vibor, fl_zagol, tip, selo) VALUES(' ;
+                  + "'" + mOKATO +"'," ;
+                  +  "'" + mName1 + "'," ;
+                  + str(mFl_vibor, 1) + "," ;
+                  + str(mFl_zagol, 1) + "," ;
+                  + str(mTip, 1) + "," ;
+                  + str(mSelo, 1) + ");"
+              if countCity18 == COMMIT_COUNT
+                cmdCity18 += "COMMIT;"
+                sqlite3_exec(db, cmdCity18)
+                countCity18 := 0
+                cmdCity18 := textBeginTrans
+              endif
+            endif
+            aTemp := {mTer, mKod1, mKod2, mKod3, mRazdel, mName1}
           endif
 
-          mOKATO  := mTer + mKod1
-          mFl_vibor := 0
-if ValType(mOKATO) != 'C' .or. ValType(mName1) != 'C'
-  altd()
-endif
-          if sqlite3_bind_text(stmt, 1, mOKATO) == SQLITE_OK .AND. ;
-                sqlite3_bind_text(stmt, 2, mName1) == SQLITE_OK .AND. ;
-                sqlite3_bind_int(stmt, 3, mFl_vibor) == SQLITE_OK .AND. ;
-                sqlite3_bind_int(stmt, 4, mFl_zagol) == SQLITE_OK .AND. ;
-                sqlite3_bind_int(stmt, 5, mTip) == SQLITE_OK .AND. ;
-                sqlite3_bind_int(stmt, 6, mSelo) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
+          if mKod2 != '000' .and. mKod1 != '000'
+            if mKod3 != '000' .or. (mKod3 == '000' .and. alltrim(mRazdel) == '1' ;
+               .and. valKod2 < 600) .or. (mKod3 == '000' .and. alltrim(mRazdel) == '1' ;
+               .and. valKod2 == 800)
+
+              mOKATO  := mTer + mKod1 + mKod2 + mKod3
+              if valKod2 == 800
+                mName1 := padr(atrepl('Сельсоветы', charrem('/', mName1), 'Населённые пункты'), 60)
+              else
+                mName1 := alltrim(charrem('/', mName1)) + iif(len(alltrim(mCentrum)) > 2, '/' + alltrim(mCentrum), '')
+              endif
+              mFl_vibor := 1
+              if eq_any(mKod2, '360', '500', '550', '600', '800')
+                 mFl_zagol := 1
+              endif
+              if val(mKod1) < 200     // округа
+                mTip := 1
+              elseif val(mKod1) < 400 // районы
+                mTip := 2
+              elseif val(mKod1) < 500 // города пос гор типа
+                mTip := 3
+              else                          // федеральные города
+                mTip := 4
+              endif
+              if val(mKod1) < 200     // округа
+                mSelo := 0
+              elseif val(mKod1) < 400 // районы
+                mSelo := 0
+              elseif val(mKod1) < 500 // города пос гор типа
+                mSelo := 1
+              else                          // федеральные города
+                mSelo := 1
+              endif
+              if mSelo == 0  //selo
+                if valKod2 > 500 .and. valKod2 < 600
+                  mSelo := 1
+                endif
+              endif
+              count++
+              cmdSeloText += 'INSERT INTO _okatos (okato, name, fl_vibor, fl_zagol, tip, selo) VALUES(' ;
+                    + "'" + mOKATO +"'," ;
+                    +  "'" + mName1 + "'," ;
+                    + str(mFl_vibor, 1) + "," ;
+                    + str(mFl_zagol, 1) + "," ;
+                    + str(mTip, 1) + "," ;
+                    + str(mSelo, 1) + ");"
+              if count == COMMIT_COUNT
+                cmdSeloText += "COMMIT;"
+                sqlite3_exec(db, cmdSeloText)
+                count := 0
+                cmdSeloText := textBeginTrans
+              endif
+
+              if mTer == '18' // для Волгоградской области
+                count18++
+                cmdSelo18 += 'INSERT INTO _okatos8 (okato, name, fl_vibor, fl_zagol, tip, selo) VALUES(' ;
+                    + "'" + mOKATO +"'," ;
+                    +  "'" + mName1 + "'," ;
+                    + str(mFl_vibor, 1) + "," ;
+                    + str(mFl_zagol, 1) + "," ;
+                    + str(mTip, 1) + "," ;
+                    + str(mSelo, 1) + ");"
+                if count18 == COMMIT_COUNT
+                  cmdSelo18 += "COMMIT;"
+                  sqlite3_exec(db, cmdSelo18)
+                  count18 := 0
+                  cmdSelo18 := textBeginTrans
+                endif
+              endif
             endif
           endif
-          sqlite3_reset(stmt)
-        
-       
         endif
       next j
-    // endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
+      if countRegion > 0
+        cmdRegionText += "COMMIT;"
+        sqlite3_exec(db, cmdRegionText)
+      endif
+      if countCity > 0
+        cmdCityText += "COMMIT;"
+        sqlite3_exec(db, cmdCityText)
+      endif
+      if countCity18 > 0
+        cmdCity18 += "COMMIT;"
+        sqlite3_exec(db, cmdCity18)
+      endif
+      if count > 0
+        cmdSeloText += "COMMIT;"
+        sqlite3_exec(db, cmdSeloText)
+      endif
+      if count18 > 0
+        cmdSelo18 += "COMMIT;"
+        sqlite3_exec(db, cmdSelo18)
+      endif
+
   endif
   // out_obrabotka_eol()
   return nil
