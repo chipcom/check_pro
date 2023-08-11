@@ -81,7 +81,7 @@ function run_sqlimport()
 
     // make_V0xx(db, source, fOut, fError)
     make_O0xx(db, source, fOut, fError)
-    // make_Q0xx(db, source, fOut, fError)
+    make_Q0xx(db, source, fOut, fError)
 
     // make_F0xx(db, source, fOut, fError)
     // make_mzdrav(db, source, fOut, fError)
