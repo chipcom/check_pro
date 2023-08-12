@@ -41,7 +41,7 @@ function run_sqlimport()
   //   return nil
   // endif
 
-  waitStatus()
+  // waitStatus()
   fError := TFileText():New(cur_dir() + 'error.log', , .t., , .t.)
   fOut := TFileText():New(cur_dir() + 'output.log', , .t., , .t.)
 
@@ -79,9 +79,9 @@ function run_sqlimport()
     sqlite3_exec(db, 'PRAGMA auto_vacuum=0')
     sqlite3_exec(db, 'PRAGMA page_size=4096')
 
-    // make_V0xx(db, source, fOut, fError)
-    make_O0xx(db, source, fOut, fError)
-    make_Q0xx(db, source, fOut, fError)
+    make_V0xx(db, source, fOut, fError)
+    // make_O0xx(db, source, fOut, fError)
+    // make_Q0xx(db, source, fOut, fError)
 
     // make_F0xx(db, source, fOut, fError)
     // make_mzdrav(db, source, fOut, fError)

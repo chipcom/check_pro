@@ -2,8 +2,9 @@
 #include '.\dict_error.ch'
 
 #require 'hbsqlit3'
+#define COMMIT_COUNT  500
 
-// 17.01.23
+// 11.08.23
 function make_V0xx(db, source, fOut, fError)
 
   make_V002(db, source, fOut, fError)
@@ -18,7 +19,7 @@ function make_V0xx(db, source, fOut, fError)
   make_V020(db, source, fOut, fError)
   make_V021(db, source, fOut, fError)
   make_V022(db, source, fOut, fError)
-  // make_V024(db, source)
+  // // make_V024(db, source)
   make_V025(db, source, fOut, fError)
   make_V030(db, source, fOut, fError)
   make_V031(db, source, fOut, fError)
@@ -28,1514 +29,21 @@ function make_V0xx(db, source, fOut, fError)
 
   return nil
 
-// 10.01.23
-Function make_V009(db, source, fOut, fError)
-  // IDRMP,     "N",   3, 0  // ÐšÐ¾Ð´ Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ð° Ð¾Ð±Ñ€Ð°Ñ‰ÐµÐ½Ð¸Ñ
-  // RMPNAME,   "C", 254, 0  // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ð° Ð¾Ð±Ñ€Ð°Ñ‰ÐµÐ½Ð¸Ñ
-  // DL_USLOV,  "N",   2, 0  // Ð¡Ð¾Ð¾Ñ‚Ð²ÐµÑ‚ÑÑ‚Ð²ÑƒÐµÑ‚ ÑƒÑÐ»Ð¾Ð²Ð¸ÑÐ¼ Ð¾ÐºÐ°Ð·Ð°Ð½Ð¸Ñ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸ (V006)
-  // DATEBEG,   "D",   8, 0  // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,   "D",   8, 0   // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1, oNode2
-  local mIDRMP, mRmpname, mDL_USLOV, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v009(idrmp INTEGER, rmpname TEXT, dl_uslov INTEGER, datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V009.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ð¾Ð² Ð¾Ð±Ñ€Ð°Ñ‰ÐµÐ½Ð¸Ñ Ð·Ð° Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰ÑŒÑŽ (Rezult)' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v009') == SQLITE_OK
-    fOut:add_string('DROP TABLE v009 - Ok' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v009 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v009 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v009 (idrmp, rmpname, dl_uslov, datebeg, dateend) VALUES( :idrmp, :rmpname, :dl_uslov, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mIDRMP := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDRMP')
-          mRmpname := read_xml_stroke_1251_to_utf8(oXmlNode, 'RMPNAME')
-          mDL_USLOV := read_xml_stroke_1251_to_utf8(oXmlNode, 'DL_USLOV')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_int(stmt, 1, val(mIDRMP)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mRmpname) == SQLITE_OK .AND. ;
-            sqlite3_bind_int(stmt, 3, val(mDL_USLOV)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 5, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-  
-// 10.01.23
-Function make_v010(db, source, fOut, fError)
-  // IDSP,       "N",      2,      0  // ÐšÐ¾Ð´ ÑÐ¿Ð¾ÑÐ¾Ð±Ð° Ð¾Ð¿Ð»Ð°Ñ‚Ñ‹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸
-  // SPNAME,     "C",    254,      0  // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ ÑÐ¿Ð¾ÑÐ¾Ð±Ð° Ð¾Ð¿Ð»Ð°Ñ‚Ñ‹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸
-  // DATEBEG,   "D",   8, 0  // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,   "D",   8, 0   // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1, oNode2
-  local mIDSP, mSpname, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v010(idsp INTEGER, spname TEXT, datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V010.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ ÑÐ¿Ð¾ÑÐ¾Ð±Ð¾Ð² Ð¾Ð¿Ð»Ð°Ñ‚Ñ‹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸ (Sposob)' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v010') == SQLITE_OK
-    fOut:add_string('DROP TABLE v010 - Ok' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v010 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v010 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v010 (idsp, spname, datebeg, dateend) VALUES( :idsp, :spname, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mIDSP := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDSP')
-          mSpname := read_xml_stroke_1251_to_utf8(oXmlNode, 'SPNAME')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_int(stmt, 1, val(mIDSP)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mSpname) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-
-// 10.01.23
-Function make_V012(db, source, fOut, fError)
-  // IDIZ,      "N",   3, 0  // ÐšÐ¾Ð´ Ð¸ÑÑ…Ð¾Ð´Ð° Ð·Ð°Ð±Ð¾Ð»ÐµÐ²Ð°Ð½Ð¸Ñ
-  // IZNAME,    "C", 254, 0  // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ Ð¸ÑÑ…Ð¾Ð´Ð° Ð·Ð°Ð±Ð¾Ð»ÐµÐ²Ð°Ð½Ð¸Ñ
-  // DL_USLOV,  "N",   2, 0  // Ð¡Ð¾Ð¾Ñ‚Ð²ÐµÑ‚ÑÑ‚Ð²ÑƒÐµÑ‚ ÑƒÑÐ»Ð¾Ð²Ð¸ÑÐ¼ Ð¾ÐºÐ°Ð·Ð°Ð½Ð¸Ñ ÐœÐŸ (V006)
-  // DATEBEG,   "D",   8, 0  // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,   "D",   8, 0   // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1, oNode2
-  local mIDIZ, mIzname, mDL_USLOV, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v012(idiz INTEGER, izname TEXT, dl_uslov INTEGER, datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V012.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð¸ÑÑ…Ð¾Ð´Ð¾Ð² Ð·Ð°Ð±Ð¾Ð»ÐµÐ²Ð°Ð½Ð¸Ñ (Ishod)' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v012') == SQLITE_OK
-    fOut:add_string('DROP TABLE v012 - Ok' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v012 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v012 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v012 (idiz, izname, dl_uslov, datebeg, dateend) VALUES( :idiz, :izname, :dl_uslov, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mIDIZ := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDIZ')
-          mIzname := read_xml_stroke_1251_to_utf8(oXmlNode, 'IZNAME')
-          mDL_USLOV := read_xml_stroke_1251_to_utf8(oXmlNode, 'DL_USLOV')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_int(stmt, 1, val(mIDIZ)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mIzname) == SQLITE_OK .AND. ;
-            sqlite3_bind_int(stmt, 3, val(mDL_USLOV)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 5, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-  
-// 10.01.23
-Function make_V015(db, source, fOut, fError)
-  // RECID,  "N",    3,      0      // ÐÐ¾Ð¼ÐµÑ€ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // CODE,   "N",    4,      0      // ÐšÐ¾Ð´ ÑÐ¿ÐµÑ†Ð¸Ð°Ð»ÑŒÐ½Ð¾ÑÑ‚Ð¸
-  // NAME,   "C",  254,      0      // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ ÑÐ¿ÐµÑ†Ð¸Ð°Ð»ÑŒÐ½Ð¾ÑÑ‚Ð¸
-  // HIGH,   "N",    4,      0      // ÐŸÑ€Ð¸Ð½Ð°Ð´Ð»ÐµÐ¶Ð½Ð¾ÑÑ‚ÑŒ (Ð¸ÐµÑ€Ð°Ñ€Ñ…Ð¸Ñ)
-  // OKSO,   "N",    3,      0      // Ð—Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ ÐžÐšÐ¡Ðž
-  // DATEBEG,    "D",      8,      0 // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,    "D",      8,      0 // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1, oNode2
-  local mRecid, mCode, mName, mHigh, mOKSO, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v015(recid INTEGER, code INTEGER, name TEXT, high TEXT(4), okso TEXT(3), datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V015.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¸Ñ… ÑÐ¿ÐµÑ†Ð¸Ð°Ð»ÑŒÐ½Ð¾ÑÑ‚ÐµÐ¹ (Medspec)' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v015') == SQLITE_OK
-    fOut:add_string('DROP TABLE v015 - Ok' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v015 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v015 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v015 (recid, code, name, high, okso, datebeg, dateend) VALUES( :recid, :code, :name, :high, :okso, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mRecid := read_xml_stroke_1251_to_utf8(oXmlNode, 'RECID')
-          mCode := read_xml_stroke_1251_to_utf8(oXmlNode, 'CODE')
-          mName := read_xml_stroke_1251_to_utf8(oXmlNode, 'NAME')
-          mHigh := read_xml_stroke_1251_to_utf8(oXmlNode, 'HIGH')
-          mOKSO := read_xml_stroke_1251_to_utf8(oXmlNode, 'OKSO')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_int(stmt, 1, val(mRecid)) == SQLITE_OK .AND. ;
-            sqlite3_bind_int(stmt, 2, val(mCode)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, mName) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, mHigh) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 5, mOKSO) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 6, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 7, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-  
-// 10.01.23
-Function make_V016(db, source, fOut, fError)
-  // IDDT,     "C",        3,      0 // ÐšÐ¾Ð´ Ñ‚Ð¸Ð¿Ð° Ð´Ð¸ÑÐ¿Ð°Ð½ÑÐµÑ€Ð¸Ð·Ð°Ñ†Ð¸Ð¸
-  // DTNAME,   "C",      254,      0 // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ Ñ‚Ð¸Ð¿Ð° Ð´Ð¸ÑÐ¿Ð°Ð½ÑÐµÑ€Ð¸Ð·Ð°Ñ†Ð¸Ð¸
-  // RULE,     "N",        2,      0 // Ð—Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ð° Ð´Ð¸ÑÐ¿Ð°Ð½ÑÐµÑ€Ð¸Ð·Ð°Ñ†Ð¸Ð¸ (Ð—Ð°Ð¿Ð¾Ð»Ð½ÑÐµÑ‚ÑÑ Ð² ÑÐ¾Ð¾Ñ‚Ð²ÐµÑ‚ÑÑ‚Ð²Ð¸Ð¸ Ñ ÐºÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€Ð¾Ð¼ V017)
-  // DATEBEG,    "D",      8,      0 // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,    "D",      8,      0 // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1, oNode2
-  local mIDDT, mDTNAME, mRule, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v016(iddt TEXT(3), dtname TEXT, rule TEXT, datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V016.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ñ‚Ð¸Ð¿Ð¾Ð² Ð´Ð¸ÑÐ¿Ð°Ð½ÑÐµÑ€Ð¸Ð·Ð°Ñ†Ð¸Ð¸ (DispT)' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v016') == SQLITE_OK
-    fOut:add_string('DROP TABLE v016 - Ok' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v016 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v016 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v016 (iddt, dtname, rule, datebeg, dateend) VALUES( :iddt, :dtname, :rule, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mIDDT := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDDT')
-          mDTNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'DTNAME')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          mRule := ''
-          if (oNode1 := oXmlNode:Find('DTRULE')) != NIL
-            for j1 := 1 TO Len( oNode1:aItems )
-              oNode2 := oNode1:aItems[j1]
-              if 'RULE' == oNode2:title .and. !empty(oNode2:aItems) .and. valtype(oNode2:aItems[1]) == 'C'
-                mRule := mRule + iif(empty(mRule), '', ',') + alltrim(oNode2:aItems[1])
-              endif
-            next
-          endif
-  
-          if sqlite3_bind_text(stmt, 1, mIDDT) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mDTNAME) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, mRule) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 5, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-  
-// 10.01.23
-Function make_V017(db, source, fOut, fError)
-  // IDDR,     "N",        2,      0 // ÐšÐ¾Ð´ Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ð° Ð´Ð¸ÑÐ¿Ð°Ð½ÑÐµÑ€Ð¸Ð·Ð°Ñ†Ð¸Ð¸
-  // DRNAME,   "C",      254,      0 // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ð° Ð´Ð¸ÑÐ¿Ð°Ð½ÑÐµÑ€Ð¸Ð·Ð°Ñ†Ð¸Ð¸
-  // DATEBEG,    "D",      8,      0 // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,    "D",      8,      0 // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
-  local mIDDR, mDRNAME, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v017(iddr INTEGER, drname TEXT, datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V017.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ð¾Ð² Ð´Ð¸ÑÐ¿Ð°Ð½ÑÐµÑ€Ð¸Ð·Ð°Ñ†Ð¸Ð¸ (DispR)' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v017') == SQLITE_OK
-    fOut:add_string('DROP TABLE v017 - Ok' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v017 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v017 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v017 (iddr, drname, datebeg, dateend) VALUES( :iddr, :drname, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mIDDR := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDDR')
-          mDRNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'DRNAME')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_int(stmt, 1, val(mIDDR)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mDRNAME) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-  
-// 10.01.23
-Function make_V018(db, source, fOut, fError)
-  // IDHVID,     "C",     12,      0 // ÐšÐ¾Ð´ Ð²Ð¸Ð´Ð° Ð²Ñ‹ÑÐ¾ÐºÐ¾Ñ‚ÐµÑ…Ð½Ð¾Ð»Ð¾Ð³Ð¸Ñ‡Ð½Ð¾Ð¹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸
-  // HVIDNAME,   "C",   1000,      0 // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ Ð²Ð¸Ð´Ð° Ð²Ñ‹ÑÐ¾ÐºÐ¾Ñ‚ÐµÑ…Ð½Ð¾Ð»Ð¾Ð³Ð¸Ñ‡Ð½Ð¾Ð¹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸
-  // DATEBEG,    "D",      8,      0 // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,    "D",      8,      0 // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
-  local mIDHVID, mHVIDNAME, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v018(idhvid TEXT(12), hvidname BLOB, datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V018.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð²Ð¸Ð´Ð¾Ð² Ð²Ñ‹ÑÐ¾ÐºÐ¾Ñ‚ÐµÑ…Ð½Ð¾Ð»Ð¾Ð³Ð¸Ñ‡Ð½Ð¾Ð¹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸ (HVid)' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v018') == SQLITE_OK
-    fOut:add_string('DROP TABLE v018 - Ok' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v018 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v018 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v018 (idhvid, hvidname, datebeg, dateend) VALUES( :idhvid, :hvidname, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mIDHVID := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDHVID')
-          mHVIDNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'HVIDNAME')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_text(stmt, 1, mIDHVID) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mHVIDNAME) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-  
-// 10.01.23
-Function make_V019(db, source, fOut, fError)
-  // IDHM,       "N",      4,      0 // Ð˜Ð´ÐµÐ½Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð¼ÐµÑ‚Ð¾Ð´Ð° Ð²Ñ‹ÑÐ¾ÐºÐ¾Ñ‚ÐµÑ…Ð½Ð¾Ð»Ð¾Ð³Ð¸Ñ‡Ð½Ð¾Ð¹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸
-  // HMNAME,     "C",   1000,      0; // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ Ð¼ÐµÑ‚Ð¾Ð´Ð° Ð²Ñ‹ÑÐ¾ÐºÐ¾Ñ‚ÐµÑ…Ð½Ð¾Ð»Ð¾Ð³Ð¸Ñ‡Ð½Ð¾Ð¹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸
-  // DIAG,       "C",   1000,      0 // Ð’ÐµÑ€Ñ…Ð½Ð¸Ðµ ÑƒÑ€Ð¾Ð²Ð½Ð¸ ÐºÐ¾Ð´Ð¾Ð² Ð´Ð¸Ð°Ð³Ð½Ð¾Ð·Ð° Ð¿Ð¾ ÐœÐšÐ‘ Ð´Ð»Ñ Ð´Ð°Ð½Ð½Ð¾Ð³Ð¾ Ð¼ÐµÑ‚Ð¾Ð´Ð°; ÑƒÐºÐ°Ð·Ñ‹Ð²Ð°ÑŽÑ‚ÑÑ Ñ‡ÐµÑ€ÐµÐ· Ñ€Ð°Ð·Ð´ÐµÐ»Ð¸Ñ‚ÐµÐ»ÑŒ ";".
-  // HVID,       "C",     12,      0 // ÐšÐ¾Ð´ Ð²Ð¸Ð´Ð° Ð²Ñ‹ÑÐ¾ÐºÐ¾Ñ‚ÐµÑ…Ð½Ð¾Ð»Ð¾Ð³Ð¸Ñ‡Ð½Ð¾Ð¹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸ Ð´Ð»Ñ Ð´Ð°Ð½Ð½Ð¾Ð³Ð¾ Ð¼ÐµÑ‚Ð¾Ð´Ð°
-  // HGR,        "N",      3,      0 // ÐÐ¾Ð¼ÐµÑ€ Ð³Ñ€ÑƒÐ¿Ð¿Ñ‹ Ð²Ñ‹ÑÐ¾ÐºÐ¾Ñ‚ÐµÑ…Ð½Ð¾Ð»Ð¾Ð³Ð¸Ñ‡Ð½Ð¾Ð¹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸ Ð´Ð»Ñ Ð´Ð°Ð½Ð½Ð¾Ð³Ð¾ Ð¼ÐµÑ‚Ð¾Ð´Ð°
-  // HMODP,      "C",   1000,      0 // ÐœÐ¾Ð´ÐµÐ»ÑŒ Ð¿Ð°Ñ†Ð¸ÐµÐ½Ñ‚Ð° Ð´Ð»Ñ Ð¼ÐµÑ‚Ð¾Ð´Ð¾Ð² Ð²Ñ‹ÑÐ¾ÐºÐ¾Ñ‚ÐµÑ…Ð½Ð¾Ð»Ð¾Ð³Ð¸Ñ‡Ð½Ð¾Ð¹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸ Ñ Ð¾Ð´Ð¸Ð½Ð°ÐºÐ¾Ð²Ñ‹Ð¼Ð¸ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸ÑÐ¼Ð¸ Ð¿Ð¾Ð»Ñ "HMNAME". ÐÐµ Ð·Ð°Ð¿Ð¾Ð»Ð½ÑÐµÑ‚ÑÑ, Ð½Ð°Ñ‡Ð¸Ð½Ð°Ñ Ñ Ð²ÐµÑ€ÑÐ¸Ð¸ 3.0
-  // IDMODP,     "N",      5,      0 // Ð˜Ð´ÐµÐ½Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð¼Ð¾Ð´ÐµÐ»Ð¸ Ð¿Ð°Ñ†Ð¸ÐµÐ½Ñ‚Ð° Ð´Ð»Ñ Ð´Ð°Ð½Ð½Ð¾Ð³Ð¾ Ð¼ÐµÑ‚Ð¾Ð´Ð° (Ð½Ð°Ñ‡Ð¸Ð½Ð°Ñ Ñ Ð²ÐµÑ€ÑÐ¸Ð¸ 3.0, Ð·Ð°Ð¿Ð¾Ð»Ð½ÑÐµÑ‚ÑÑ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸ÐµÐ¼ Ð¿Ð¾Ð»Ñ IDMPAC ÐºÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€Ð° V022)
-  // DATEBEG,    "D",      8,      0 // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,    "D",      8,      0 // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
-  local mIDHM, mHMNAME, mDIAG, mHVID, mHGR, mHMODP, mIDMODP, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v019(idhm INTEGER, hmname BLOB, diag BLOB, hvid TEXT(12), hgr INTEGER, hmodp BLOB, idmodp INTEGER, datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V019.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð¼ÐµÑ‚Ð¾Ð´Ð¾Ð² Ð²Ñ‹ÑÐ¾ÐºÐ¾Ñ‚ÐµÑ…Ð½Ð¾Ð»Ð¾Ð³Ð¸Ñ‡Ð½Ð¾Ð¹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸ (HMet)' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v019') == SQLITE_OK
-    fOut:add_string('DROP TABLE v019 - Ok' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v019 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v019 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v019 (idhm, hmname, diag, hvid, hgr, hmodp, idmodp, datebeg, dateend) VALUES( :idhm, :hmname, :diag, :hvid, :hgr, :hmodp, :idmodp, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mIDHM := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDHM')
-          mHMNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'HMNAME')
-          mDIAG := read_xml_stroke_1251_to_utf8(oXmlNode, 'DIAG')
-          mHVID := read_xml_stroke_1251_to_utf8(oXmlNode, 'HVID')
-          mHGR := read_xml_stroke_1251_to_utf8(oXmlNode, 'HGR')
-          mHMODP := read_xml_stroke_1251_to_utf8(oXmlNode, 'HMODP')
-          mIDMODP := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDMODP')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_int(stmt, 1, val(mIDHM)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mHMNAME) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, mDIAG) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, mHVID) == SQLITE_OK .AND. ;
-            sqlite3_bind_int(stmt, 5, val(mHGR)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 6, mHMODP) == SQLITE_OK .AND. ;
-            sqlite3_bind_int(stmt, 7, val(mIDMODP)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 8, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 9, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return NIL
-
-// 10.01.23
-Function make_V020(db, source, fOut, fError)
-  // IDK_PR,     "N",      3,      0 // ÐšÐ¾Ð´ Ð¿Ñ€Ð¾Ñ„Ð¸Ð»Ñ ÐºÐ¾Ð¹ÐºÐ¸
-  // K_PRNAME,   "C",    254,      0 // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ Ð¿Ñ€Ð¾Ñ„Ð¸Ð»Ñ ÐºÐ¾Ð¹ÐºÐ¸
-  // DATEBEG,    "D",      8,      0 // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,    "D",      8,      0  // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
-  local mIDK_PR, mK_PRNAME, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v020(idk_pr INTEGER, k_prname BLOB, datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V020.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð¿Ñ€Ð¾Ñ„Ð¸Ð»Ñ ÐºÐ¾Ð¹ÐºÐ¸ (KoPr)' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v020') == SQLITE_OK
-    fOut:add_string('DROP TABLE v020 - Ok' + hb_eol())
-  endif
- 
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v020 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v020 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v020 (idk_pr, k_prname, datebeg, dateend) VALUES( :idk_pr, :k_prname, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mIDK_PR := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDK_PR')
-          mK_PRNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'K_PRNAME')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_int(stmt, 1, val(mIDK_PR)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mK_PRNAME) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return NIL
-
-// 10.01.23
-Function make_V021(db, source, fOut, fError)
-  // IDSPEC,     "N",      3,      0  // ÐšÐ¾Ð´ ÑÐ¿ÐµÑ†Ð¸Ð°Ð»ÑŒÐ½Ð¾ÑÑ‚Ð¸
-  // SPECNAME,   "C", 254             // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ ÑÐ¿ÐµÑ†Ð¸Ð°Ð»ÑŒÐ½Ð¾ÑÑ‚Ð¸
-  // POSTNAME,   "C",    400,      0  // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ Ð´Ð¾Ð»Ð¶Ð½Ð¾ÑÑ‚Ð¸
-  // IDPOST_MZ,   "C",    4,      0  // ÐšÐ¾Ð´ Ð´Ð¾Ð»Ð¶Ð½Ð¾ÑÑ‚Ð¸ Ð² ÑÐ¾Ð¾Ñ‚Ð²ÐµÑ‚ÑÑ‚Ð²Ð¸Ð¸ Ñ ÐÐ¡Ð˜ ÐœÐ¸Ð½Ð·Ð´Ñ€Ð°Ð²Ð° Ð Ð¾ÑÑÐ¸Ð¸ (OID 1.2.643.5.1.13.13.11.1002)
-  // DATEBEG,   "D",   8, 0           // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,   "D",   8, 0           // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
-  local mIDSPEC, mSPECNAME, mPOSTNAME, mIDPOST_MZ, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v021(idspec INTEGER, specname BLOB, postname BLOB, idpost_mz TEXT(4), datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V021.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¸Ñ… ÑÐ¿ÐµÑ†Ð¸Ð°Ð»ÑŒÐ½Ð¾ÑÑ‚ÐµÐ¹ (Ð´Ð¾Ð»Ð¶Ð½Ð¾ÑÑ‚ÐµÐ¹) (MedSpec)' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v021') == SQLITE_OK
-    fOut:add_string('DROP TABLE v021 - Ok' + hb_eol())
-  endif
-   
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v021 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v021 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v021 (idspec, specname, postname, idpost_mz, datebeg, dateend) VALUES( :idspec, :specname, :postname, :idpost_mz, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mIDSPEC := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDSPEC')
-          mSPECNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'SPECNAME')
-          mPOSTNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'POSTNAME')
-          mIDPOST_MZ := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDPOST_MZ')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_int(stmt, 1, val(mIDSPEC)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mSPECNAME) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, mPOSTNAME) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, mIDPOST_MZ) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 5, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 6, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-
-// 17.01.23
-Function make_V022(db, source, fOut, fError)
-  // IDMPAC,     "N",      5,      0  //  Ð˜Ð´ÐµÐ½Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð¼Ð¾Ð´ÐµÐ»Ð¸ Ð¿Ð°Ñ†Ð¸ÐµÐ½Ñ‚Ð°
-  // MPACNAME,   "M",     10,      0  // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ Ð¼Ð¾Ð´ÐµÐ»Ð¸ Ð¿Ð°Ñ†Ð¸ÐµÐ½Ñ‚Ð°
-  // DATEBEG,   "D",   8, 0           // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,   "D",   8, 0           // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
-  local mIDMPAC, mMPACNAME, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v022(idmpac INTEGER, mpacname BLOB, datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V022.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð¼Ð¾Ð´ÐµÐ»ÐµÐ¹ Ð¿Ð°Ñ†Ð¸ÐµÐ½Ñ‚Ð° Ð¿Ñ€Ð¸ Ð¾ÐºÐ°Ð·Ð°Ð½Ð¸Ð¸ Ð²Ñ‹ÑÐ¾ÐºÐ¾Ñ‚ÐµÑ…Ð½Ð¾Ð»Ð¾Ð³Ð¸Ñ‡Ð½Ð¾Ð¹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸ (ModPac)' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v022') == SQLITE_OK
-    fOut:add_string('DROP TABLE v022 - Ok' + hb_eol())
-  endif
-   
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v022 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v022 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v022 (idmpac, mpacname, datebeg, dateend) VALUES( :idmpac, :mpacname, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mIDMPAC := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDMPAC')
-          mMPACNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'MPACNAME')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          if d1_1 >= 0d20210101 .or. Empty(d2_1)  //0d20210101
-
-            Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-            d1 := hb_ValToStr(d1_1)
-            d2 := hb_ValToStr(d2_1)
-
-            if sqlite3_bind_int(stmt, 1, val(mIDMPAC)) == SQLITE_OK .AND. ;
-              sqlite3_bind_text(stmt, 2, mMPACNAME) == SQLITE_OK .AND. ;
-              sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
-              sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
-              if sqlite3_step(stmt) != SQLITE_DONE
-                out_error(fError, TAG_ROW_INVALID, nfile, j)
-              endif
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-
-// 10.01.23
-Function make_V024(db, source, fOut, fError)
-  // IDDKK,     "C",  10,      0  //  Ð˜Ð´ÐµÐ½Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð¼Ð¾Ð´ÐµÐ»Ð¸ Ð¿Ð°Ñ†Ð¸ÐµÐ½Ñ‚Ð°
-  // DKKNAME,   "C", 255,      0  // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ Ð¼Ð¾Ð´ÐµÐ»Ð¸ Ð¿Ð°Ñ†Ð¸ÐµÐ½Ñ‚Ð°
-  // DATEBEG,   "D",   8, 0           // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,   "D",   8, 0           // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
-  local mIDDKK, mDKKNAME, d1, d2, d1_1, d2_1
-
-  nameRef := 'V024.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  endif
-
-  fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ ÐºÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ†Ð¸Ð¾Ð½Ð½Ñ‹Ñ… ÐºÑ€Ð¸Ñ‚ÐµÑ€Ð¸ÐµÐ² (DopKr)' + hb_eol())
-  cmdText := 'CREATE TABLE v024(iddkk TEXT(10), dkkname TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  // if ! create_table(db, nameRef, cmdText)
-  //   return nil
-  // endif
-
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v024') == SQLITE_OK
-    fOut:add_string('DROP TABLE v024 - Ok' + hb_eol())
-  endif
-   
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v024 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v024 - False' + hb_eol() )
-    return nil
-  endif
-
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v024 (iddkk, dkkname, datebeg, dateend) VALUES( :iddkk, :dkkname, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mIDDKK := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDDKK')
-          mDKKNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'DKKNAME')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_text(stmt, 1, mIDDKK) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mDKKNAME) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-
-// 10.01.23
-Function make_V025(db, source, fOut, fError)
-  // IDPC,      "C",   3, 0  // ÐšÐ¾Ð´ Ñ†ÐµÐ»Ð¸ Ð¿Ð¾ÑÐµÑ‰ÐµÐ½Ð¸Ñ
-  // N_PC,      "C", 254, 0  // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ Ñ†ÐµÐ»Ð¸ Ð¿Ð¾ÑÐµÑ‰ÐµÐ½Ð¸Ñ
-  // DATEBEG,   "D",   8, 0  // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,   "D",   8, 0   // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
-  local mIDPC, mN_PC, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v025(idpc TEXT(3), n_pc BLOB, datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V025.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ñ†ÐµÐ»ÐµÐ¹ Ð¿Ð¾ÑÐµÑ‰ÐµÐ½Ð¸Ñ (KPC)' + hb_eol())
-  endif
-
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v025') == SQLITE_OK
-    fOut:add_string('DROP TABLE v025 - Ok' + hb_eol())
-  endif
-   
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v025 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v025 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty(oXmlDoc:aItems)
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v025 (idpc, n_pc, datebeg, dateend) VALUES( :idpc, :n_pc, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mIDPC := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDPC')
-          mN_PC := read_xml_stroke_1251_to_utf8(oXmlNode, 'N_PC')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_text(stmt, 1, mIDPC) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mN_PC) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-
-// 10.01.23
-Function make_V030(db, source, fOut, fError)
-  // SCHEMCOD,  "C",   5, 0  // 
-  // SCHEME,    "C",  15, 0  //
-  // DEGREE,    "N",   2, 0  //
-  // COMMENT,   "M",  10, 0  //
-  // DATEBEG,   "D",   8, 0  // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,   "D",   8, 0   // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
-  local mSchemCode, mScheme, mDegree, mComment, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v030(schemcode TEXT(5), scheme TEXT(15), degree INTEGER, comment BLOB, datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V030.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - Ð¡Ñ…ÐµÐ¼Ñ‹ Ð»ÐµÑ‡ÐµÐ½Ð¸Ñ Ð·Ð°Ð±Ð¾Ð»ÐµÐ²Ð°Ð½Ð¸Ñ COVID-19 (TreatReg)' + hb_eol())
-  endif
-  
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v030') == SQLITE_OK
-    fOut:add_string('DROP TABLE v030 - Ok' + hb_eol())
-  endif
-     
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v030 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v030 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v030 (schemcode, scheme, degree, comment, datebeg, dateend) VALUES( :schemcode, :scheme, :degree, :comment, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mSchemCode := read_xml_stroke_1251_to_utf8(oXmlNode, 'SchemCode')
-          mScheme := read_xml_stroke_1251_to_utf8(oXmlNode, 'Scheme')
-          mDegree := read_xml_stroke_1251_to_utf8(oXmlNode, 'DegreeSeverity')
-          mComment := read_xml_stroke_1251_to_utf8(oXmlNode, 'COMMENT')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-            
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_text(stmt, 1, mSchemCode) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mScheme) == SQLITE_OK .AND. ;
-            sqlite3_bind_int(stmt, 3, val(mDegree)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, mComment) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 5, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 6, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-
-// 10.01.23
-Function make_V031(db, source, fOut, fError)
-  // DRUGCODE,  "N",   2, 0  // 
-  // DRUGGRUP,  "C",  50, 0  //
-  // INDMNN,    "N",   2, 0  // ÐŸÑ€Ð¸Ð·Ð½Ð°Ðº Ð¾Ð±ÑÐ·Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð¾ÑÑ‚Ð¸ ÑƒÐºÐ°Ð·Ð°Ð½Ð¸Ñ ÐœÐÐ (1-Ð´Ð°, 0-Ð½ÐµÑ‚)
-  // DATEBEG,   "D",   8, 0  // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,   "D",   8, 0   // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
-  local mDrugCode, mDrugGrup, mIndMNN, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v031(drugcode INTEGER, druggrup TEXT, indmnn INTEGER, datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V031.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - Ð“Ñ€ÑƒÐ¿Ð¿Ñ‹ Ð¿Ñ€ÐµÐ¿Ð°Ñ€Ð°Ñ‚Ð¾Ð² Ð´Ð»Ñ Ð»ÐµÑ‡ÐµÐ½Ð¸Ñ Ð·Ð°Ð±Ð¾Ð»ÐµÐ²Ð°Ð½Ð¸Ñ COVID-19 (GroupDrugs)' + hb_eol())
-  endif
-  
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v031') == SQLITE_OK
-    fOut:add_string('DROP TABLE v031 - Ok' + hb_eol())
-  endif
-     
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v031 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v031 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v031 (drugcode, druggrup, indmnn, datebeg, dateend) VALUES( :drugcode, :druggrup, :indmnn, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mDrugCode := read_xml_stroke_1251_to_utf8(oXmlNode, 'DrugGroupCode')
-          mDrugGrup := read_xml_stroke_1251_to_utf8(oXmlNode, 'DrugGroup')
-          mIndMNN := read_xml_stroke_1251_to_utf8(oXmlNode, 'ManIndMNN')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-            
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_int(stmt, 1, val(mDrugCode)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mDrugGrup) == SQLITE_OK .AND. ;
-            sqlite3_bind_int(stmt, 3, val(mIndMNN)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 5, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-
-// 10.01.23
-Function make_V032(db, source, fOut, fError)
-  // SCHEDRUG,  "C",  10, 0  // Ð¡Ð¾Ñ‡ÐµÑ‚Ð°Ð½Ð¸Ðµ ÑÑ…ÐµÐ¼Ñ‹ Ð»ÐµÑ‡ÐµÐ½Ð¸Ñ Ð¸ Ð³Ñ€ÑƒÐ¿Ð¿Ñ‹ Ð¿Ñ€ÐµÐ¿Ð°Ñ€Ð°Ñ‚Ð¾Ð²
-  // NAME,      "C", 100, 0  //
-  // SCHEMCODE,  "C",   5, 0  //
-  // DATEBEG,   "D",   8, 0  // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,   "D",   8, 0  // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
-  local mScheDrug, mName, mSchemCode, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v032(schedrug TEXT(10), name TEXT, schemcode TEXT(5), datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V032.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - Ð¡Ð¾Ñ‡ÐµÑ‚Ð°Ð½Ð¸Ðµ ÑÑ…ÐµÐ¼Ñ‹ Ð»ÐµÑ‡ÐµÐ½Ð¸Ñ Ð¸ Ð³Ñ€ÑƒÐ¿Ð¿Ñ‹ Ð¿Ñ€ÐµÐ¿Ð°Ñ€Ð°Ñ‚Ð¾Ð² (CombTreat)' + hb_eol())
-  endif
-  
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v032') == SQLITE_OK
-    fOut:add_string('DROP TABLE v032 - Ok' + hb_eol())
-  endif
-     
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v032 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v032 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v032 (schedrug, name, schemcode, datebeg, dateend) VALUES( :schedrug, :name, :schemcode, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mScheDrug := read_xml_stroke_1251_to_utf8(oXmlNode, 'ScheDrugGrCd')
-          mName := read_xml_stroke_1251_to_utf8(oXmlNode, 'Name')
-          mSchemCode := read_xml_stroke_1251_to_utf8(oXmlNode, 'SchemCode')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-            
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_text(stmt, 1, mScheDrug) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mName) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, mSchemCode) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 5, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-
-// 10.01.23
-Function make_V033(db, source, fOut, fError)
-  // SCHEDRUG,  "C",  10, 0  // 
-  // DRUGCODE,  "C",   6, 0  //
-  // DATEBEG,   "D",   8, 0  // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,   "D",   8, 0   // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
-  local mScheDrug, mDrugCode, d1, d2, d1_1, d2_1
-
-  cmdText := 'CREATE TABLE v033(schedrug TEXT(10), drugcode TEXT(6), datebeg TEXT(10), dateend TEXT(10))'
-
-  nameRef := 'V033.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - Ð¡Ð¾Ð¾Ñ‚Ð²ÐµÑ‚ÑÑ‚Ð²Ð¸Ðµ ÐºÐ¾Ð´Ð° Ð¿Ñ€ÐµÐ¿Ð°Ñ€Ð°Ñ‚Ð° ÑÑ…ÐµÐ¼Ðµ Ð»ÐµÑ‡ÐµÐ½Ð¸Ñ (DgTreatReg)' + hb_eol())
-  endif
-  
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v033') == SQLITE_OK
-    fOut:add_string('DROP TABLE v033 - Ok' + hb_eol())
-  endif
-     
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v033 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v033 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v033 (schedrug, drugcode, datebeg, dateend) VALUES( :schedrug, :drugcode, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mScheDrug := read_xml_stroke_1251_to_utf8(oXmlNode, 'ScheDrugGrCd')
-          mDrugCode := read_xml_stroke_1251_to_utf8(oXmlNode, 'DrugCode')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-  
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-
-          if sqlite3_bind_text(stmt, 1, mScheDrug) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mDrugCode) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-
-// 10.01.23
-Function make_V036(db, source, fOut, fError)
-  // S_CODE    "C",  16, 0
-  // NAME",      "C", 150, 0
-  // "PARAM",     "N",   1, 0
-  // "COMMENT",   "C",  20, 0
-  // "DATEBEG",   "D",   8, 0 Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // "DATEEND",   "D",   8, 0 Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
-  local k, j
-  local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
-  local mS_Code, mName, mParam, mComment, d1, d2, d1_1, d2_1
-  // local mDATEBEG, mDATEEND
-
-  cmdText := 'CREATE TABLE v036( s_code TEXT(16), name BLOB, param INTEGER, comment TEXT, datebeg TEXT(10), dateend TEXT(10) )'
-
-  nameRef := 'V036.xml'
-  nfile := source + nameRef
-  if ! hb_vfExists(nfile)
-    out_error(fError, FILE_NOT_EXIST, nfile)
-    return nil
-  else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐŸÐµÑ€ÐµÑ‡ÐµÐ½ÑŒ ÑƒÑÐ»ÑƒÐ³, Ñ‚Ñ€ÐµÐ±ÑƒÑŽÑ‰Ð¸Ñ… Ð¸Ð¼Ð¿Ð»Ð°Ð½Ñ‚Ð°Ñ†Ð¸ÑŽ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¸Ñ… Ð¸Ð·Ð´ÐµÐ»Ð¸Ð¹ (ServImplDv)' + hb_eol())
-  endif
-  
-  if sqlite3_exec(db, 'DROP TABLE if EXISTS v036') == SQLITE_OK
-    fOut:add_string('DROP TABLE v036 - Ok' + hb_eol())
-  endif
-     
-  if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v036 - Ok' + hb_eol() )
-  else
-    fOut:add_string('CREATE TABLE v036 - False' + hb_eol() )
-    return nil
-  endif
-
-  oXmlDoc := HXMLDoc():Read(nfile)
-  if Empty( oXmlDoc:aItems )
-    out_error(fError, FILE_READ_ERROR, nfile)
-    return nil
-  else
-    cmdText := "INSERT INTO v036 ( s_code, name, param, comment, datebeg, dateend ) VALUES( :s_code, :name, :param, :comment, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mS_Code := read_xml_stroke_1251_to_utf8(oXmlNode, 'S_CODE')
-          mName := read_xml_stroke_1251_to_utf8(oXmlNode, 'NAME')
-          mParam := read_xml_stroke_1251_to_utf8(oXmlNode, 'Parameter')
-          mComment := read_xml_stroke_1251_to_utf8(oXmlNode, 'COMMENT')
-          // mDATEBEG := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // mDATEEND := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
-
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
-          Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-          d1 := hb_ValToStr(d1_1)
-          d2 := hb_ValToStr(d2_1)
-          
-          if sqlite3_bind_text(stmt, 1, mS_Code) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mName) == SQLITE_OK .AND. ;
-            sqlite3_bind_int(stmt, 3, val(mParam)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, mComment) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 5, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 6, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
-        endif
-      next j
-    endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
-  endif
-  // out_obrabotka_eol()
-  return nil
-
-// 09.05.22
+// 11.08.23
 Function make_V002(db, source, fOut, fError)
-  // IDPR,       "N",      3,      0  // ÐšÐ¾Ð´ Ð¿Ñ€Ð¾Ñ„Ð¸Ð»Ñ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸
-  // PRNAME,     "C",    350,      0  // ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ Ð¿Ñ€Ð¾Ñ„Ð¸Ð»Ñ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸
-  // DATEBEG,   "D",   8, 0  // Ð”Ð°Ñ‚Ð° Ð½Ð°Ñ‡Ð°Ð»Ð° Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
-  // DATEEND,   "D",   8, 0   // Ð”Ð°Ñ‚Ð° Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ Ð·Ð°Ð¿Ð¸ÑÐ¸
+  // IDPR,       "N",      3,      0  // Š®¤ ¯à®ä¨«ï ¬¥¤¨æ¨­áª®© ¯®¬®é¨
+  // PRNAME,     "C",    350,      0  //  ¨¬¥­®¢ ­¨¥ ¯à®ä¨«ï ¬¥¤¨æ¨­áª®© ¯®¬®é¨
+  // DATEBEG,   "D",   8, 0  // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,   "D",   8, 0   // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
 
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1, oNode2
-  local mIDPR, mPrname, d1, d2, d1_1, d2_1
+  local oXmlDoc, oXmlNode
+  local mIDRP, mPrname, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
 
   cmdText := 'CREATE TABLE v002(idpr INTEGER, prname TEXT, datebeg TEXT(10), dateend TEXT(10))'
 
@@ -1545,17 +53,19 @@ Function make_V002(db, source, fOut, fError)
     out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   else
-    fOut:add_string(hb_eol() + nameRef + ' - ÐšÐ»Ð°ÑÑÐ¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€ Ð¿Ñ€Ð¾Ñ„Ð¸Ð»ÐµÐ¹ Ð¾ÐºÐ°Ð·Ð°Ð½Ð½Ð¾Ð¹ Ð¼ÐµÐ´Ð¸Ñ†Ð¸Ð½ÑÐºÐ¾Ð¹ Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸ (ProfOt)' + hb_eol())
+    fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à ¯à®ä¨«¥© ®ª § ­­®© ¬¥¤¨æ¨­áª®© ¯®¬®é¨ (ProfOt)')
   endif
 
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
   if sqlite3_exec(db, 'DROP TABLE if EXISTS v002') == SQLITE_OK
-    fOut:add_string('DROP TABLE v002 - Ok' + hb_eol())
+    fOut:add_string('DROP TABLE v002 - Ok')
   endif
 
   if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE v002 - Ok' + hb_eol() )
+    fOut:add_string('CREATE TABLE v002 - Ok')
   else
-    fOut:add_string('CREATE TABLE v002 - False' + hb_eol() )
+    fOut:add_string('CREATE TABLE v002 - False')
     return nil
   endif
 
@@ -1564,40 +74,1587 @@ Function make_V002(db, source, fOut, fError)
     out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
-    cmdText := "INSERT INTO v002 (idpr, prname, datebeg, dateend) VALUES( :idpr, :prname, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      // out_obrabotka(nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mIDRP := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDPR')
-          mPrname := read_xml_stroke_1251_to_utf8(oXmlNode, 'PRNAME')
-          // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mIDRP := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDPR')
+        mPrname := read_xml_stroke_1251_to_utf8(oXmlNode, 'PRNAME')
 
-          Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
-          d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
-          d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v002(idpr, prname, datebeg, dateend) VALUES(' ;
+              + "" + mIDRP + "," ;
+              + "'" + mPrname + "'," ;
+              + "'" + d1 + "'," ;
+              + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  // out_obrabotka_eol()
+  return nil
+
+// 11.08.23
+Function make_V009(db, source, fOut, fError)
+  // IDRMP,     "N",   3, 0  // Š®¤ à¥§ã«ìâ â  ®¡à é¥­¨ï
+  // RMPNAME,   "C", 254, 0  //  ¨¬¥­®¢ ­¨¥ à¥§ã«ìâ â  ®¡à é¥­¨ï
+  // DL_USLOV,  "N",   2, 0  // ‘®®â¢¥âáâ¢ã¥â ãá«®¢¨ï¬ ®ª § ­¨ï ¬¥¤¨æ¨­áª®© ¯®¬®é¨ (V006)
+  // DATEBEG,   "D",   8, 0  // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,   "D",   8, 0   // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mIDRMP, mRmpname, mDL_USLOV, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v009(idrmp INTEGER, rmpname TEXT, dl_uslov INTEGER, datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V009.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à à¥§ã«ìâ â®¢ ®¡à é¥­¨ï §  ¬¥¤¨æ¨­áª®© ¯®¬®éìî (Rezult)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v009') == SQLITE_OK
+    fOut:add_string('DROP TABLE v009 - Ok')
+  endif
+
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v009 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v009 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mIDRMP := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDRMP')
+        mRmpname := read_xml_stroke_1251_to_utf8(oXmlNode, 'RMPNAME')
+        mDL_USLOV := read_xml_stroke_1251_to_utf8(oXmlNode, 'DL_USLOV')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v009(idrmp, rmpname, dl_uslov, datebeg, dateend) VALUES(' ;
+              + "" + mIDRMP + "," ;
+              + "'" + mRmpname + "'," ;
+              + "" + mDL_USLOV + "," ;
+              + "'" + d1 + "'," ;
+              + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  // out_obrabotka_eol()
+  return nil
+
+// 11.08.23
+Function make_v010(db, source, fOut, fError)
+  // IDSP,       "N",      2,      0  // Š®¤ á¯®á®¡  ®¯« âë ¬¥¤¨æ¨­áª®© ¯®¬®é¨
+  // SPNAME,     "C",    254,      0  //  ¨¬¥­®¢ ­¨¥ á¯®á®¡  ®¯« âë ¬¥¤¨æ¨­áª®© ¯®¬®é¨
+  // DATEBEG,   "D",   8, 0  // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,   "D",   8, 0   // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mIDSP, mSpname, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v010(idsp INTEGER, spname TEXT, datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V010.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à á¯®á®¡®¢ ®¯« âë ¬¥¤¨æ¨­áª®© ¯®¬®é¨ (Sposob)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v010') == SQLITE_OK
+    fOut:add_string('DROP TABLE v010 - Ok')
+  endif
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v010 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v010 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mIDSP := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDSP')
+        mSpname := read_xml_stroke_1251_to_utf8(oXmlNode, 'SPNAME')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v010(idsp, spname, datebeg, dateend) VALUES(' ;
+              + "" + mIDSP + "," ;
+              + "'" + mSpname + "'," ;
+              + "'" + d1 + "'," ;
+              + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return nil
+
+// 11.08.23
+Function make_V012(db, source, fOut, fError)
+  // IDIZ,      "N",   3, 0  // Š®¤ ¨áå®¤  § ¡®«¥¢ ­¨ï
+  // IZNAME,    "C", 254, 0  //  ¨¬¥­®¢ ­¨¥ ¨áå®¤  § ¡®«¥¢ ­¨ï
+  // DL_USLOV,  "N",   2, 0  // ‘®®â¢¥âáâ¢ã¥â ãá«®¢¨ï¬ ®ª § ­¨ï Œ (V006)
+  // DATEBEG,   "D",   8, 0  // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,   "D",   8, 0   // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mIDIZ, mIzname, mDL_USLOV, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v012(idiz INTEGER, izname TEXT, dl_uslov INTEGER, datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V012.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à ¨áå®¤®¢ § ¡®«¥¢ ­¨ï (Ishod)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v012') == SQLITE_OK
+    fOut:add_string('DROP TABLE v012 - Ok')
+  endif
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v012 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v012 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mIDIZ := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDIZ')
+        mIzname := read_xml_stroke_1251_to_utf8(oXmlNode, 'IZNAME')
+        mDL_USLOV := read_xml_stroke_1251_to_utf8(oXmlNode, 'DL_USLOV')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v012(idiz, izname, dl_uslov, datebeg, dateend) VALUES(' ;
+              + "" + mIDIZ + "," ;
+              + "'" + mIzname + "'," ;
+              + "" + mDL_USLOV + "," ;
+              + "'" + d1 + "'," ;
+              + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return nil
+
+// 11.08.23
+Function make_V015(db, source, fOut, fError)
+  // RECID,  "N",    3,      0      // ®¬¥à § ¯¨á¨
+  // CODE,   "N",    4,      0      // Š®¤ á¯¥æ¨ «ì­®áâ¨
+  // NAME,   "C",  254,      0      //  ¨¬¥­®¢ ­¨¥ á¯¥æ¨ «ì­®áâ¨
+  // HIGH,   "N",    4,      0      // à¨­ ¤«¥¦­®áâì (¨¥à àå¨ï)
+  // OKSO,   "N",    3,      0      // ‡­ ç¥­¨¥ ŽŠ‘Ž
+  // DATEBEG,    "D",      8,      0 // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,    "D",      8,      0 // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mRecid, mCode, mName, mHigh, mOKSO, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v015(recid INTEGER, code INTEGER, name TEXT, high TEXT(4), okso TEXT(3), datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V015.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à ¬¥¤¨æ¨­áª¨å á¯¥æ¨ «ì­®áâ¥© (Medspec)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v015') == SQLITE_OK
+    fOut:add_string('DROP TABLE v015 - Ok')
+  endif
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v015 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v015 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mRecid := read_xml_stroke_1251_to_utf8(oXmlNode, 'RECID')
+        mCode := read_xml_stroke_1251_to_utf8(oXmlNode, 'CODE')
+        mName := read_xml_stroke_1251_to_utf8(oXmlNode, 'NAME')
+        mHigh := read_xml_stroke_1251_to_utf8(oXmlNode, 'HIGH')
+        mOKSO := read_xml_stroke_1251_to_utf8(oXmlNode, 'OKSO')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v015(recid, code, name, high, okso, datebeg, dateend) VALUES(' ;
+              + "" + mRecid + "," ;
+              + "" + mCode + "," ;
+              + "'" + mName + "'," ;
+              + "'" + mHigh + "'," ;
+              + "'" + mOKSO + "'," ;
+              + "'" + d1 + "'," ;
+              + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return nil
+
+// 11.08.23
+Function make_V016(db, source, fOut, fError)
+  // IDDT,     "C",        3,      0 // Š®¤ â¨¯  ¤¨á¯ ­á¥à¨§ æ¨¨
+  // DTNAME,   "C",      254,      0 //  ¨¬¥­®¢ ­¨¥ â¨¯  ¤¨á¯ ­á¥à¨§ æ¨¨
+  // RULE,     "N",        2,      0 // ‡­ ç¥­¨¥ à¥§ã«ìâ â  ¤¨á¯ ­á¥à¨§ æ¨¨ (‡ ¯®«­ï¥âáï ¢ á®®â¢¥âáâ¢¨¨ á ª« áá¨ä¨ª â®à®¬ V017)
+  // DATEBEG,    "D",      8,      0 // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,    "D",      8,      0 // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode, oNode1, oNode2
+  local mIDDT, mDTNAME, mRule, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v016(iddt TEXT(3), dtname TEXT, rule TEXT, datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V016.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à â¨¯®¢ ¤¨á¯ ­á¥à¨§ æ¨¨ (DispT)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v016') == SQLITE_OK
+    fOut:add_string('DROP TABLE v016 - Ok')
+  endif
+
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v016 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v016 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mIDDT := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDDT')
+        mDTNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'DTNAME')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        mRule := ''
+        if (oNode1 := oXmlNode:Find('DTRULE')) != NIL
+          for j1 := 1 TO Len( oNode1:aItems )
+            oNode2 := oNode1:aItems[j1]
+            if 'RULE' == oNode2:title .and. !empty(oNode2:aItems) .and. valtype(oNode2:aItems[1]) == 'C'
+              mRule := mRule + iif(empty(mRule), '', ',') + alltrim(oNode2:aItems[1])
+            endif
+          next
+        endif
+  
+        count++
+        cmdTextInsert += 'INSERT INTO v016(iddt, dtname, rule, datebeg, dateend) VALUES(' ;
+              + "'" + mIDDT + "'," ;
+              + "'" + mDTNAME + "'," ;
+              + "'" + mRule + "'," ;
+              + "'" + d1 + "'," ;
+              + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return nil
+
+// 11.08.23
+Function make_V017(db, source, fOut, fError)
+  // IDDR,     "N",        2,      0 // Š®¤ à¥§ã«ìâ â  ¤¨á¯ ­á¥à¨§ æ¨¨
+  // DRNAME,   "C",      254,      0 //  ¨¬¥­®¢ ­¨¥ à¥§ã«ìâ â  ¤¨á¯ ­á¥à¨§ æ¨¨
+  // DATEBEG,    "D",      8,      0 // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,    "D",      8,      0 // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mIDDR, mDRNAME, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v017(iddr INTEGER, drname TEXT, datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V017.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à à¥§ã«ìâ â®¢ ¤¨á¯ ­á¥à¨§ æ¨¨ (DispR)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v017') == SQLITE_OK
+    fOut:add_string('DROP TABLE v017 - Ok')
+  endif
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v017 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v017 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mIDDR := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDDR')
+        mDRNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'DRNAME')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v017(iddr, drname, datebeg, dateend) VALUES(' ;
+            + "" + mIDDR + "," ;
+            + "'" + mDRNAME + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return nil
+
+// 11.08.23
+Function make_V018(db, source, fOut, fError)
+  // IDHVID,     "C",     12,      0 // Š®¤ ¢¨¤  ¢ëá®ª®â¥å­®«®£¨ç­®© ¬¥¤¨æ¨­áª®© ¯®¬®é¨
+  // HVIDNAME,   "C",   1000,      0 //  ¨¬¥­®¢ ­¨¥ ¢¨¤  ¢ëá®ª®â¥å­®«®£¨ç­®© ¬¥¤¨æ¨­áª®© ¯®¬®é¨
+  // DATEBEG,    "D",      8,      0 // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,    "D",      8,      0 // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mIDHVID, mHVIDNAME, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v018(idhvid TEXT(12), hvidname BLOB, datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V018.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à ¢¨¤®¢ ¢ëá®ª®â¥å­®«®£¨ç­®© ¬¥¤¨æ¨­áª®© ¯®¬®é¨ (HVid)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v018') == SQLITE_OK
+    fOut:add_string('DROP TABLE v018 - Ok')
+  endif
+
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v018 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v018 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mIDHVID := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDHVID')
+        mHVIDNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'HVIDNAME')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v018(idhvid, hvidname, datebeg, dateend) VALUES(' ;
+            + "'" + mIDHVID + "'," ;
+            + "'" + mHVIDNAME + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return nil
+
+// 11.08.23
+Function make_V019(db, source, fOut, fError)
+  // IDHM,       "N",      4,      0 // ˆ¤¥­â¨ä¨ª â®à ¬¥â®¤  ¢ëá®ª®â¥å­®«®£¨ç­®© ¬¥¤¨æ¨­áª®© ¯®¬®é¨
+  // HMNAME,     "C",   1000,      0; //  ¨¬¥­®¢ ­¨¥ ¬¥â®¤  ¢ëá®ª®â¥å­®«®£¨ç­®© ¬¥¤¨æ¨­áª®© ¯®¬®é¨
+  // DIAG,       "C",   1000,      0 // ‚¥àå­¨¥ ãà®¢­¨ ª®¤®¢ ¤¨ £­®§  ¯® ŒŠ ¤«ï ¤ ­­®£® ¬¥â®¤ ; ãª §ë¢ îâáï ç¥à¥§ à §¤¥«¨â¥«ì ";".
+  // HVID,       "C",     12,      0 // Š®¤ ¢¨¤  ¢ëá®ª®â¥å­®«®£¨ç­®© ¬¥¤¨æ¨­áª®© ¯®¬®é¨ ¤«ï ¤ ­­®£® ¬¥â®¤ 
+  // HGR,        "N",      3,      0 // ®¬¥à £àã¯¯ë ¢ëá®ª®â¥å­®«®£¨ç­®© ¬¥¤¨æ¨­áª®© ¯®¬®é¨ ¤«ï ¤ ­­®£® ¬¥â®¤ 
+  // HMODP,      "C",   1000,      0 // Œ®¤¥«ì ¯ æ¨¥­â  ¤«ï ¬¥â®¤®¢ ¢ëá®ª®â¥å­®«®£¨ç­®© ¬¥¤¨æ¨­áª®© ¯®¬®é¨ á ®¤¨­ ª®¢ë¬¨ §­ ç¥­¨ï¬¨ ¯®«ï "HMNAME". ¥ § ¯®«­ï¥âáï, ­ ç¨­ ï á ¢¥àá¨¨ 3.0
+  // IDMODP,     "N",      5,      0 // ˆ¤¥­â¨ä¨ª â®à ¬®¤¥«¨ ¯ æ¨¥­â  ¤«ï ¤ ­­®£® ¬¥â®¤  (­ ç¨­ ï á ¢¥àá¨¨ 3.0, § ¯®«­ï¥âáï §­ ç¥­¨¥¬ ¯®«ï IDMPAC ª« áá¨ä¨ª â®à  V022)
+  // DATEBEG,    "D",      8,      0 // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,    "D",      8,      0 // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mIDHM, mHMNAME, mDIAG, mHVID, mHGR, mHMODP, mIDMODP, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v019(idhm INTEGER, hmname BLOB, diag BLOB, hvid TEXT(12), hgr INTEGER, hmodp BLOB, idmodp INTEGER, datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V019.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à ¬¥â®¤®¢ ¢ëá®ª®â¥å­®«®£¨ç­®© ¬¥¤¨æ¨­áª®© ¯®¬®é¨ (HMet)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v019') == SQLITE_OK
+    fOut:add_string('DROP TABLE v019 - Ok')
+  endif
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v019 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v019 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mIDHM := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDHM')
+        mHMNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'HMNAME')
+        mDIAG := read_xml_stroke_1251_to_utf8(oXmlNode, 'DIAG')
+        mHVID := read_xml_stroke_1251_to_utf8(oXmlNode, 'HVID')
+        mHGR := read_xml_stroke_1251_to_utf8(oXmlNode, 'HGR')
+        mHMODP := read_xml_stroke_1251_to_utf8(oXmlNode, 'HMODP')
+        mIDMODP := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDMODP')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v019(idhm, hmname, diag, hvid, hgr, hmodp, idmodp, datebeg, dateend) VALUES(' ;
+            + "" + alltrim(str(val(mIDHM))) + "," ;
+            + "'" + mHMNAME + "'," ;
+            + "'" + mDIAG + "'," ;
+            + "'" + mHVID + "'," ;
+            + "" + alltrim(str(val(mHGR))) + "," ;
+            + "'" + mHMODP + "'," ;
+            + "" + alltrim(str(val(mIDMODP))) + "," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return NIL
+
+// 11.08.23
+Function make_V020(db, source, fOut, fError)
+  // IDK_PR,     "N",      3,      0 // Š®¤ ¯à®ä¨«ï ª®©ª¨
+  // K_PRNAME,   "C",    254,      0 //  ¨¬¥­®¢ ­¨¥ ¯à®ä¨«ï ª®©ª¨
+  // DATEBEG,    "D",      8,      0 // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,    "D",      8,      0  // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mIDK_PR, mK_PRNAME, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v020(idk_pr INTEGER, k_prname BLOB, datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V020.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à ¯à®ä¨«ï ª®©ª¨ (KoPr)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v020') == SQLITE_OK
+    fOut:add_string('DROP TABLE v020 - Ok')
+  endif
+   if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v020 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v020 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mIDK_PR := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDK_PR')
+        mK_PRNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'K_PRNAME')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v020(idk_pr, k_prname, datebeg, dateend) VALUES(' ;
+            + "" + alltrim(str(val(mIDK_PR))) + "," ;
+            + "'" + mK_PRNAME + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return NIL
+
+// 12.08.23
+Function make_V021(db, source, fOut, fError)
+  // IDSPEC,     "N",      3,      0  // Š®¤ á¯¥æ¨ «ì­®áâ¨
+  // SPECNAME,   "C", 254             //  ¨¬¥­®¢ ­¨¥ á¯¥æ¨ «ì­®áâ¨
+  // POSTNAME,   "C",    400,      0  //  ¨¬¥­®¢ ­¨¥ ¤®«¦­®áâ¨
+  // IDPOST_MZ,   "C",    4,      0  // Š®¤ ¤®«¦­®áâ¨ ¢ á®®â¢¥âáâ¢¨¨ á ‘ˆ Œ¨­§¤à ¢  ®áá¨¨ (OID 1.2.643.5.1.13.13.11.1002)
+  // DATEBEG,   "D",   8, 0           // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,   "D",   8, 0           // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+  
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mIDSPEC, mSPECNAME, mPOSTNAME, mIDPOST_MZ, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v021(idspec INTEGER, specname BLOB, postname BLOB, idpost_mz TEXT(4), datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V021.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à ¬¥¤¨æ¨­áª¨å á¯¥æ¨ «ì­®áâ¥© (¤®«¦­®áâ¥©) (MedSpec)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v021') == SQLITE_OK
+    fOut:add_string('DROP TABLE v021 - Ok')
+  endif
+   
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v021 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v021 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mIDSPEC := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDSPEC')
+        mSPECNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'SPECNAME')
+        mPOSTNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'POSTNAME')
+        mIDPOST_MZ := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDPOST_MZ')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v021(idspec, specname, postname, idpost_mz, datebeg, dateend) VALUES(' ;
+            + "" + alltrim(str(val(mIDSPEC))) + "," ;
+            + "'" + mSPECNAME + "'," ;
+            + "'" + mPOSTNAME + "'," ;
+            + "'" + mIDPOST_MZ + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return nil
+
+// 12.08.23
+Function make_V022(db, source, fOut, fError)
+  // IDMPAC,     "N",      5,      0  //  ˆ¤¥­â¨ä¨ª â®à ¬®¤¥«¨ ¯ æ¨¥­â 
+  // MPACNAME,   "M",     10,      0  //  ¨¬¥­®¢ ­¨¥ ¬®¤¥«¨ ¯ æ¨¥­â 
+  // DATEBEG,   "D",   8, 0           // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,   "D",   8, 0           // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+  
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mIDMPAC, mMPACNAME, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v022(idmpac INTEGER, mpacname BLOB, datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V022.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à ¬®¤¥«¥© ¯ æ¨¥­â  ¯à¨ ®ª § ­¨¨ ¢ëá®ª®â¥å­®«®£¨ç­®© ¬¥¤¨æ¨­áª®© ¯®¬®é¨ (ModPac)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v022') == SQLITE_OK
+    fOut:add_string('DROP TABLE v022 - Ok')
+  endif
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v022 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v022 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mIDMPAC := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDMPAC')
+        mMPACNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'MPACNAME')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        if d1_1 >= 0d20210101 .or. Empty(d2_1)  //0d20210101
+
           Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
           d1 := hb_ValToStr(d1_1)
           d2 := hb_ValToStr(d2_1)
 
-          if sqlite3_bind_int(stmt, 1, val(mIDRP)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mPrname) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(fError, TAG_ROW_INVALID, nfile, j)
-            endif
+          count++
+          cmdTextInsert += 'INSERT INTO v022(idmpac, mpacname, datebeg, dateend) VALUES(' ;
+              + "" + alltrim(str(val(mIDMPAC))) + "," ;
+              + "'" + mMPACNAME + "'," ;
+              + "'" + d1 + "'," ;
+              + "'" + d2 + "');"
+          if count == COMMIT_COUNT
+            cmdTextInsert += textCommitTrans
+            sqlite3_exec(db, cmdTextInsert)
+            count := 0
+            cmdTextInsert := textBeginTrans
           endif
-          sqlite3_reset(stmt)
         endif
-      next j
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
     endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
   endif
-  // out_obrabotka_eol()
+  return nil
+
+// 12.08.23
+Function make_V025(db, source, fOut, fError)
+  // IDPC,      "C",   3, 0  // Š®¤ æ¥«¨ ¯®á¥é¥­¨ï
+  // N_PC,      "C", 254, 0  //  ¨¬¥­®¢ ­¨¥ æ¥«¨ ¯®á¥é¥­¨ï
+  // DATEBEG,   "D",   8, 0  // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,   "D",   8, 0   // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mIDPC, mN_PC, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v025(idpc TEXT(3), n_pc BLOB, datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V025.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à æ¥«¥© ¯®á¥é¥­¨ï (KPC)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v025') == SQLITE_OK
+    fOut:add_string('DROP TABLE v025 - Ok')
+  endif
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v025 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v025 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty(oXmlDoc:aItems)
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mIDPC := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDPC')
+        mN_PC := read_xml_stroke_1251_to_utf8(oXmlNode, 'N_PC')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v025(idpc, n_pc, datebeg, dateend) VALUES(' ;
+            + "'" + mIDPC + "'," ;
+            + "'" + mN_PC + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return nil
+
+// 12.08.23
+Function make_V030(db, source, fOut, fError)
+  // SCHEMCOD,  "C",   5, 0  // 
+  // SCHEME,    "C",  15, 0  //
+  // DEGREE,    "N",   2, 0  //
+  // COMMENT,   "M",  10, 0  //
+  // DATEBEG,   "D",   8, 0  // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,   "D",   8, 0   // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mSchemCode, mScheme, mDegree, mComment, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v030(schemcode TEXT(5), scheme TEXT(15), degree INTEGER, comment BLOB, datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V030.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - ‘å¥¬ë «¥ç¥­¨ï § ¡®«¥¢ ­¨ï COVID-19 (TreatReg)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v030') == SQLITE_OK
+    fOut:add_string('DROP TABLE v030 - Ok')
+  endif
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v030 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v030 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mSchemCode := read_xml_stroke_1251_to_utf8(oXmlNode, 'SchemCode')
+        mScheme := read_xml_stroke_1251_to_utf8(oXmlNode, 'Scheme')
+        mDegree := read_xml_stroke_1251_to_utf8(oXmlNode, 'DegreeSeverity')
+        mComment := read_xml_stroke_1251_to_utf8(oXmlNode, 'COMMENT')
+            
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v030(schemcode, scheme, degree, comment, datebeg, dateend) VALUES(' ;
+            + "'" + mSchemCode + "'," ;
+            + "'" + mScheme + "'," ;
+            + "" + alltrim(str(val(mDegree))) + "," ;
+            + "'" + mComment + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return nil
+
+// 12.08.23
+Function make_V031(db, source, fOut, fError)
+  // DRUGCODE,  "N",   2, 0  // 
+  // DRUGGRUP,  "C",  50, 0  //
+  // INDMNN,    "N",   2, 0  // à¨§­ ª ®¡ï§ â¥«ì­®áâ¨ ãª § ­¨ï Œ (1-¤ , 0-­¥â)
+  // DATEBEG,   "D",   8, 0  // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,   "D",   8, 0   // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mDrugCode, mDrugGrup, mIndMNN, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v031(drugcode INTEGER, druggrup TEXT, indmnn INTEGER, datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V031.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - ƒàã¯¯ë ¯à¥¯ à â®¢ ¤«ï «¥ç¥­¨ï § ¡®«¥¢ ­¨ï COVID-19 (GroupDrugs)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v031') == SQLITE_OK
+    fOut:add_string('DROP TABLE v031 - Ok')
+  endif
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v031 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v031 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mDrugCode := read_xml_stroke_1251_to_utf8(oXmlNode, 'DrugGroupCode')
+        mDrugGrup := read_xml_stroke_1251_to_utf8(oXmlNode, 'DrugGroup')
+        mIndMNN := read_xml_stroke_1251_to_utf8(oXmlNode, 'ManIndMNN')
+          
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v031(drugcode, druggrup, indmnn, datebeg, dateend) VALUES(' ;
+            + "" + alltrim(str(val(mDrugCode))) + "," ;
+            + "'" + mDrugGrup + "'," ;
+            + "" + alltrim(str(val(mIndMNN))) + "," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return nil
+
+// 12.08.23
+Function make_V032(db, source, fOut, fError)
+  // SCHEDRUG,  "C",  10, 0  // ‘®ç¥â ­¨¥ áå¥¬ë «¥ç¥­¨ï ¨ £àã¯¯ë ¯à¥¯ à â®¢
+  // NAME,      "C", 100, 0  //
+  // SCHEMCODE,  "C",   5, 0  //
+  // DATEBEG,   "D",   8, 0  // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,   "D",   8, 0  // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mScheDrug, mName, mSchemCode, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v032(schedrug TEXT(10), name TEXT, schemcode TEXT(5), datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V032.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - ‘®ç¥â ­¨¥ áå¥¬ë «¥ç¥­¨ï ¨ £àã¯¯ë ¯à¥¯ à â®¢ (CombTreat)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v032') == SQLITE_OK
+    fOut:add_string('DROP TABLE v032 - Ok')
+  endif
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v032 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v032 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mScheDrug := read_xml_stroke_1251_to_utf8(oXmlNode, 'ScheDrugGrCd')
+        mName := read_xml_stroke_1251_to_utf8(oXmlNode, 'Name')
+        mSchemCode := read_xml_stroke_1251_to_utf8(oXmlNode, 'SchemCode')
+            
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v032(schedrug, name, schemcode, datebeg, dateend) VALUES(' ;
+            + "'" + mScheDrug + "'," ;
+            + "'" + mName + "'," ;
+            + "'" + mSchemCode + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return nil
+
+// 12.08.23
+Function make_V033(db, source, fOut, fError)
+  // SCHEDRUG,  "C",  10, 0  // 
+  // DRUGCODE,  "C",   6, 0  //
+  // DATEBEG,   "D",   8, 0  // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,   "D",   8, 0   // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mScheDrug, mDrugCode, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v033(schedrug TEXT(10), drugcode TEXT(6), datebeg TEXT(10), dateend TEXT(10))'
+
+  nameRef := 'V033.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - ‘®®â¢¥âáâ¢¨¥ ª®¤  ¯à¥¯ à â  áå¥¬¥ «¥ç¥­¨ï (DgTreatReg)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v033') == SQLITE_OK
+    fOut:add_string('DROP TABLE v033 - Ok')
+  endif
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v033 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v033 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mScheDrug := read_xml_stroke_1251_to_utf8(oXmlNode, 'ScheDrugGrCd')
+        mDrugCode := read_xml_stroke_1251_to_utf8(oXmlNode, 'DrugCode')
+  
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+        count++
+        cmdTextInsert += 'INSERT INTO v033(schedrug, drugcode, datebeg, dateend) VALUES(' ;
+            + "'" + mScheDrug + "'," ;
+            + "'" + mDrugCode + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return nil
+
+// 12.08.23
+Function make_V036(db, source, fOut, fError)
+  // S_CODE    "C",  16, 0
+  // NAME",      "C", 150, 0
+  // "PARAM",     "N",   1, 0
+  // "COMMENT",   "C",  20, 0
+  // "DATEBEG",   "D",   8, 0 „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // "DATEEND",   "D",   8, 0 „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mS_Code, mName, mParam, mComment, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  cmdText := 'CREATE TABLE v036( s_code TEXT(16), name BLOB, param INTEGER, comment TEXT, datebeg TEXT(10), dateend TEXT(10) )'
+
+  nameRef := 'V036.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - ¥à¥ç¥­ì ãá«ã£, âà¥¡ãîé¨å ¨¬¯« ­â æ¨î ¬¥¤¨æ¨­áª¨å ¨§¤¥«¨© (ServImplDv)')
+  endif
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v036') == SQLITE_OK
+    fOut:add_string('DROP TABLE v036 - Ok')
+  endif
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v036 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v036 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mS_Code := read_xml_stroke_1251_to_utf8(oXmlNode, 'S_CODE')
+        mName := read_xml_stroke_1251_to_utf8(oXmlNode, 'NAME')
+        mParam := read_xml_stroke_1251_to_utf8(oXmlNode, 'Parameter')
+        mComment := read_xml_stroke_1251_to_utf8(oXmlNode, 'COMMENT')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+          
+        count++
+        cmdTextInsert += 'INSERT INTO v036(s_code, name, param, comment, datebeg, dateend) VALUES(' ;
+            + "'" + mS_Code + "'," ;
+            + "'" + mName + "'," ;
+            + "" + alltrim(str(val(mParam))) + "," ;
+            + "'" + mComment + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
+  return nil
+
+// 12.08.23
+Function make_V024(db, source, fOut, fError)
+  // IDDKK,     "C",  10,      0  //  ˆ¤¥­â¨ä¨ª â®à ¬®¤¥«¨ ¯ æ¨¥­â 
+  // DKKNAME,   "C", 255,      0  //  ¨¬¥­®¢ ­¨¥ ¬®¤¥«¨ ¯ æ¨¥­â 
+  // DATEBEG,   "D",   8, 0           // „ â  ­ ç «  ¤¥©áâ¢¨ï § ¯¨á¨
+  // DATEEND,   "D",   8, 0           // „ â  ®ª®­ç ­¨ï ¤¥©áâ¢¨ï § ¯¨á¨
+  
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mIDDKK, mDKKNAME, d1, d2, d1_1, d2_1
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
+
+  nameRef := 'V024.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  endif
+
+  cmdText := 'CREATE TABLE v024(iddkk TEXT(10), dkkname TEXT, datebeg TEXT(10), dateend TEXT(10))'
+  fOut:add_string(hb_eol() + nameRef + ' - Š« áá¨ä¨ª â®à ª« áá¨ä¨ª æ¨®­­ëå ªà¨â¥à¨¥¢ (DopKr)')
+
+  stat_msg('Ž¡à ¡®âª  ä ©« : ' + nfile)  
+
+  if sqlite3_exec(db, 'DROP TABLE if EXISTS v024') == SQLITE_OK
+    fOut:add_string('DROP TABLE v024 - Ok')
+  endif
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE v024 - Ok')
+  else
+    fOut:add_string('CREATE TABLE v024 - False')
+    return nil
+  endif
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    // cmdText := "INSERT INTO v024 (iddkk, dkkname, datebeg, dateend) VALUES( :iddkk, :dkkname, :datebeg, :dateend )"
+    // stmt := sqlite3_prepare(db, cmdText)
+    // if ! Empty(stmt)
+    fOut:add_string('Ž¡à ¡®âª  - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mIDDKK := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDDKK')
+        mDKKNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'DKKNAME')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := hb_ValToStr(d1_1)
+        d2 := hb_ValToStr(d2_1)
+
+          // if sqlite3_bind_text(stmt, 1, mIDDKK) == SQLITE_OK .AND. ;
+          //   sqlite3_bind_text(stmt, 2, mDKKNAME) == SQLITE_OK .AND. ;
+          //   sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
+          //   sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
+          //   if sqlite3_step(stmt) != SQLITE_DONE
+          //     out_error(fError, TAG_ROW_INVALID, nfile, j)
+          //   endif
+          // endif
+          // sqlite3_reset(stmt)
+    // cmdText := "INSERT INTO v024 (iddkk, dkkname, datebeg, dateend) VALUES( :iddkk, :dkkname, :datebeg, :dateend )"
+        count++
+        cmdTextInsert += 'INSERT INTO v024(iddkk, dkkname, datebeg, dateend) VALUES(' ;
+            + "'" + mIDDKK + "'," ;
+            + "'" + mDKKNAME + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
+        endif
+      endif
+    next j
+    // endif
+    // sqlite3_clear_bindings(stmt)
+    // sqlite3_finalize(stmt)
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Ž¡à ¡®â ­® ' + str(k) + ' ã§«®¢.' + hb_eol() )
+  endif
   return nil

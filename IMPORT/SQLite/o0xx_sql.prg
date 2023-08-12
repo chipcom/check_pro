@@ -39,16 +39,18 @@ Function make_O001(db, source, fOut, fError)
     out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   else
-    fOut:add_string(hb_eol() + nameRef + ' - Общероссийский классификатор стран мира (OKSM)' + hb_eol())
+    fOut:add_string(hb_eol() + nameRef + ' - Общероссийский классификатор стран мира (OKSM)')
   endif
 
+  stat_msg('Обработка файла: ' + nfile)  
+
   if sqlite3_exec(db, 'DROP TABLE if EXISTS o001') == SQLITE_OK
-    fOut:add_string('DROP TABLE o001 - Ok' + hb_eol())
+    fOut:add_string('DROP TABLE o001 - Ok')
   endif
   if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE o001 - Ok' + hb_eol() )
+    fOut:add_string('CREATE TABLE o001 - Ok')
   else
-    fOut:add_string('CREATE TABLE o001 - False' + hb_eol() )
+    fOut:add_string('CREATE TABLE o001 - False')
     return nil
   endif
 
@@ -57,6 +59,7 @@ Function make_O001(db, source, fOut, fError)
     out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
+    fOut:add_string('Обработка - ' + nfile)
     k := Len( oXmlDoc:aItems[1]:aItems )
     for j := 1 to k
       oXmlNode := oXmlDoc:aItems[1]:aItems[j]
@@ -123,60 +126,62 @@ Function make_O002(db, source, fOut, fError)
     out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   else
-    fOut:add_string(hb_eol() + nameRef + ' - Общероссийский классификатор административно-территориального деления (OKATO)' + hb_eol())
+    fOut:add_string(hb_eol() + nameRef + ' - Общероссийский классификатор административно-территориального деления (OKATO)')
   endif
 
+  stat_msg('Обработка файла: ' + nfile)  
+
   if sqlite3_exec(db, 'DROP TABLE if EXISTS _okator') == SQLITE_OK
-    fOut:add_string('DROP TABLE _okator - Ok' + hb_eol())
+    fOut:add_string('DROP TABLE _okator - Ok')
   endif
   if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE _okator - Ok' + hb_eol() )
+    fOut:add_string('CREATE TABLE _okator - Ok')
   else
-    fOut:add_string('CREATE TABLE _okator - False' + hb_eol() )
+    fOut:add_string('CREATE TABLE _okator - False')
     return nil
   endif
 
   cmdText := 'CREATE TABLE _okatoo (okato TEXT(5), name TEXT(72), fl_vibor INTEGER, fl_zagol INTEGER, tip INTEGER, selo INTEGER)'
   if sqlite3_exec(db, 'DROP TABLE if EXISTS _okatoo') == SQLITE_OK
-    fOut:add_string('DROP TABLE _okatoo - Ok' + hb_eol())
+    fOut:add_string('DROP TABLE _okatoo - Ok')
   endif
   if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE _okatoo - Ok' + hb_eol() )
+    fOut:add_string('CREATE TABLE _okatoo - Ok')
   else
-    fOut:add_string('CREATE TABLE _okatoo - False' + hb_eol() )
+    fOut:add_string('CREATE TABLE _okatoo - False')
     return nil
   endif
 
   cmdText := 'CREATE TABLE _okatoo8 (okato TEXT(5), name TEXT(72), fl_vibor INTEGER, fl_zagol INTEGER, tip INTEGER, selo INTEGER)'
   if sqlite3_exec(db, 'DROP TABLE if EXISTS _okatoo8') == SQLITE_OK
-    fOut:add_string('DROP TABLE _okatoo8 - Ok' + hb_eol())
+    fOut:add_string('DROP TABLE _okatoo8 - Ok')
   endif
   if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE _okatoo8 - Ok' + hb_eol() )
+    fOut:add_string('CREATE TABLE _okatoo8 - Ok')
   else
-    fOut:add_string('CREATE TABLE _okatoo8 - False' + hb_eol() )
+    fOut:add_string('CREATE TABLE _okatoo8 - False')
     return nil
   endif
 
   cmdText := 'CREATE TABLE _okatos (okato TEXT(11), name TEXT(72), fl_vibor INTEGER, fl_zagol INTEGER, tip INTEGER, selo INTEGER)'
   if sqlite3_exec(db, 'DROP TABLE if EXISTS _okatos') == SQLITE_OK
-    fOut:add_string('DROP TABLE _okatos - Ok' + hb_eol())
+    fOut:add_string('DROP TABLE _okatos - Ok')
   endif
   if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE _okatos - Ok' + hb_eol() )
+    fOut:add_string('CREATE TABLE _okatos - Ok')
   else
-    fOut:add_string('CREATE TABLE _okatos - False' + hb_eol() )
+    fOut:add_string('CREATE TABLE _okatos - False')
     return nil
   endif
 
   cmdText := 'CREATE TABLE _okatos8 (okato TEXT(11), name TEXT(72), fl_vibor INTEGER, fl_zagol INTEGER, tip INTEGER, selo INTEGER)'
   if sqlite3_exec(db, 'DROP TABLE if EXISTS _okatos8') == SQLITE_OK
-    fOut:add_string('DROP TABLE _okatos8 - Ok' + hb_eol())
+    fOut:add_string('DROP TABLE _okatos8 - Ok')
   endif
   if sqlite3_exec(db, cmdText) == SQLITE_OK
-    fOut:add_string('CREATE TABLE _okatos8 - Ok' + hb_eol() )
+    fOut:add_string('CREATE TABLE _okatos8 - Ok')
   else
-    fOut:add_string('CREATE TABLE _okatos8 - False' + hb_eol() )
+    fOut:add_string('CREATE TABLE _okatos8 - False')
     return nil
   endif
 
@@ -185,7 +190,7 @@ Function make_O002(db, source, fOut, fError)
     out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
-      // out_obrabotka(nfile)
+    fOut:add_string('Обработка - ' + nfile + hb_eol())
     k := Len( oXmlDoc:aItems[1]:aItems )
     for j := 1 to k
       oXmlNode := oXmlDoc:aItems[1]:aItems[j]
