@@ -5,6 +5,8 @@
 #include '.\check_pro.ch'
 #include 'tbox.ch'
 
+#require 'hbsqlit3'
+
 function begin_task_services()
   local dbName := '_mo_mo'
   local standart, uroven
@@ -148,3 +150,41 @@ Function f2_mo_mo(nKey, oBrow)
   rest_box(buf)
   return k
   
+// 15.05.22
+function clear_name_table(table)
+
+  table := Lower(alltrim(table))
+  
+  return hb_FNameName(table)
+
+// 13.08.23
+function create_table(db, table, cmdText, fOut, fError)
+  // db - дескриптор SQL БД
+  // table - имя таблицы вида name.xml
+  // cmdText - строка команды SQL для создания таблицы SQL БД
+  local ret := .f.
+  
+  table := clear_name_table(table)
+
+  drop_table(db, table, fOut, fError)
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('CREATE TABLE ' + table + ' - Ok')
+    ret := .t.
+  else
+    fOut:add_string('CREATE TABLE ' + table + ' - False')
+  endif
+  return ret
+
+// 13.08.23
+function drop_table(db, table, fOut, fError)
+  // db - дескриптор SQL БД
+  // table - имя таблицы SQL БД
+  local cmdText
+  
+  cmdText := 'DROP TABLE if EXISTS ' + table
+
+  if sqlite3_exec(db, cmdText) == SQLITE_OK
+    fOut:add_string('DROP TABLE ' + table + ' - Ok')
+  endif
+  return nil
+

@@ -4,7 +4,7 @@
 #include 'tfile.ch'
 #include '.\dict_error.ch'
 
-// 31.07.23
+// 13.08.23
 function run_sqlimport()
   local source
   local destination
@@ -85,7 +85,8 @@ function run_sqlimport()
 
     // make_F0xx(db, source, fOut, fError)
     // make_mzdrav(db, source, fOut, fError)
-    make_other(db, source, fOut, fError)
+    // make_other(db, source, fOut, fError)
+    make_N0xx(db, source, fOut, fError)
 
     db := sqlite3_open_v2( nameDB, SQLITE_OPEN_READWRITE + SQLITE_OPEN_EXCLUSIVE )
     if ! Empty( db )

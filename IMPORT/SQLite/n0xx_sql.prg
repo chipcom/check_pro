@@ -6,7 +6,7 @@
 #require 'hbsqlit3'
 #define COMMIT_COUNT  500
 
-// 12.05.22
+// 13.08.23
 function make_N0xx(db, source, fOut, fError)
 
   make_n001(db, source, fOut, fError)
@@ -14,22 +14,22 @@ function make_N0xx(db, source, fOut, fError)
   make_n003(db, source, fOut, fError)
   make_n004(db, source, fOut, fError)
   make_n005(db, source, fOut, fError)
-  make_n006(db, source, fOut, fError)
-  make_n007(db, source, fOut, fError)
-  make_n008(db, source, fOut, fError)
-  make_n009(db, source, fOut, fError)
-  make_n010(db, source, fOut, fError)
-  make_n011(db, source, fOut, fError)
-  make_n012(db, source, fOut, fError)
-  make_n013(db, source, fOut, fError)
-  make_n014(db, source, fOut, fError)
-  make_n015(db, source, fOut, fError)
-  make_n016(db, source, fOut, fError)
-  make_n017(db, source, fOut, fError)
-  make_n018(db, source, fOut, fError)
-  make_n019(db, source, fOut, fError)
-  make_n020(db, source, fOut, fError)
-  make_n021(db, source, fOut, fError)
+  // make_n006(db, source, fOut, fError)
+  // make_n007(db, source, fOut, fError)
+  // make_n008(db, source, fOut, fError)
+  // make_n009(db, source, fOut, fError)
+  // make_n010(db, source, fOut, fError)
+  // make_n011(db, source, fOut, fError)
+  // make_n012(db, source, fOut, fError)
+  // make_n013(db, source, fOut, fError)
+  // make_n014(db, source, fOut, fError)
+  // make_n015(db, source, fOut, fError)
+  // make_n016(db, source, fOut, fError)
+  // make_n017(db, source, fOut, fError)
+  // make_n018(db, source, fOut, fError)
+  // make_n019(db, source, fOut, fError)
+  // make_n020(db, source, fOut, fError)
+  // make_n021(db, source, fOut, fError)
 
   return nil
 
@@ -39,123 +39,135 @@ function make_n001(db, source, fOut, fError)
   // PrOt_NAME,  "C",250, 0 // Наименование противопоказания или отказа
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
+  local oXmlDoc, oXmlNode
   local mID_prot, mProt_Name, d1, d2
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
 
   nameRef := 'N001.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор противопоказаний и отказов (OnkPrOt)')
 
   cmdText := 'CREATE TABLE n001(id_prot INTEGER, prot_name TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
+
+  stat_msg('Обработка файла: ' + nfile)  
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
-    cmdText := "INSERT INTO n001(id_prot, prot_name, datebeg, dateend) VALUES( :id_prot, :prot_name, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      fOut:add_string('Обработка - ' + nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mID_prot := read_xml_stroke_1251_to_utf8(oXmlNode, 'ID_PrOt')
-          mProt_Name := read_xml_stroke_1251_to_utf8(oXmlNode, 'PrOt_NAME')
-          d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
+    fOut:add_string('Обработка - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mID_prot := read_xml_stroke_1251_to_utf8(oXmlNode, 'ID_PrOt')
+        mProt_Name := read_xml_stroke_1251_to_utf8(oXmlNode, 'PrOt_NAME')
+        d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
+        d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
 
-          if sqlite3_bind_int(stmt, 1, val(mID_prot)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mProt_Name) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
+        count++
+        cmdTextInsert += 'INSERT INTO n001(id_prot, prot_name, datebeg, dateend) VALUES(' ;
+            + "" + mID_prot + "," ;
+            + "'" + mProt_Name + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
         endif
-      next j
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
     endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
+    fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
   return nil
 
-// 12.05.22
+// 13.08.23
 function make_n002(db, source, fOut, fError)
   // ID_St,      "N",  4, 0 // Идентификатор стадии
   // DS_St,      "C",  5, 0 // Диагноз по МКБ
   // KOD_St,     "C",  5, 0 // Стадия
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
+  local oXmlDoc, oXmlNode
   local mID_st, mDS_St, mKod_st, d1, d2
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
 
   nameRef := 'N002.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор стадий (OnkStad)')
   cmdText := 'CREATE TABLE n002(id_st INTEGER, ds_st TEXT(5), kod_st TEXT(5), datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
+  stat_msg('Обработка файла: ' + nfile)  
+
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
-    cmdText := "INSERT INTO n002(id_st, ds_st, kod_st, datebeg, dateend) VALUES( :id_st, :ds_st, :kod_st, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      fOut:add_string('Обработка - ' + nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mID_st := read_xml_stroke_1251_to_utf8(oXmlNode, 'ID_St')
-          mDS_St := read_xml_stroke_1251_to_utf8(oXmlNode, 'DS_St')
-          mKod_st := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD_St')
-          d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
+    fOut:add_string('Обработка - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mID_st := read_xml_stroke_1251_to_utf8(oXmlNode, 'ID_St')
+        mDS_St := read_xml_stroke_1251_to_utf8(oXmlNode, 'DS_St')
+        mKod_st := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD_St')
+        d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
+        d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
 
-          if sqlite3_bind_int(stmt, 1, val(mID_st)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mDS_St) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, mKod_St) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 5, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
+        count++
+        cmdTextInsert += 'INSERT INTO n002(id_st, ds_st, kod_st, datebeg, dateend) VALUES(' ;
+            + "" + mID_st + "," ;
+            + "'" + mDS_St + "'," ;
+            + "'" + mKod_St + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
         endif
-      next j
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
     endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
+    fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
   return nil
 
@@ -167,62 +179,68 @@ function make_n003(db, source, fOut, fError)
   // T_NAME,     "C", 250, 0 // Расшифровка T для диагноза
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
+  local oXmlDoc, oXmlNode
   local mID_T, mDS_T, mKod_T, mT_name, d1, d2
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
 
   nameRef := 'N003.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор Tumor (OnkT)')
   cmdText := 'CREATE TABLE n003(id_t INTEGER, ds_t TEXT(5), kod_t TEXT(5), t_name TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
+  stat_msg('Обработка файла: ' + nfile)  
+
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
-    cmdText := "INSERT INTO n003(id_t, ds_t, kod_t, t_name, datebeg, dateend) VALUES( :id_t, :ds_t, :kod_t, :t_name, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      fOut:add_string('Обработка - ' + nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mID_t := read_xml_stroke_1251_to_utf8(oXmlNode, 'ID_T')
-          mDS_t := read_xml_stroke_1251_to_utf8(oXmlNode, 'DS_T')
-          mKod_t := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD_T')
-          mT_name := read_xml_stroke_1251_to_utf8(oXmlNode, 'T_NAME')
-          d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
+    fOut:add_string('Обработка - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mID_t := read_xml_stroke_1251_to_utf8(oXmlNode, 'ID_T')
+        mDS_t := read_xml_stroke_1251_to_utf8(oXmlNode, 'DS_T')
+        mKod_t := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD_T')
+        mT_name := read_xml_stroke_1251_to_utf8(oXmlNode, 'T_NAME')
+        d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
+        d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
 
-          if sqlite3_bind_int(stmt, 1, val(mID_t)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mDS_t) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, mKod_t) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, mT_name) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 5, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 6, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
+        count++
+        cmdTextInsert += 'INSERT INTO n003(id_t, ds_t, kod_t, t_name, datebeg, dateend) VALUES(' ;
+            + "" + mID_t + "," ;
+            + "'" + mDS_t + "'," ;
+            + "'" + mKod_t + "'," ;
+            + "'" + mT_name + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
         endif
-      next j
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
     endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
+    fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
   return nil
 
@@ -234,66 +252,72 @@ function make_n004(db, source, fOut, fError)
   // N_NAME,     "C",500, 0 // Расшифровка N для диагноза
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
+  local oXmlDoc, oXmlNode
   local mID_N, mDS_N, mKod_N, mN_name, d1, d2
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
 
   nameRef := 'N004.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор Nodus (OnkN)')
   cmdText := 'CREATE TABLE n004(id_n INTEGER, ds_n TEXT(5), kod_n TEXT(5), n_name TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
+
+  stat_msg('Обработка файла: ' + nfile)  
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
-    cmdText := "INSERT INTO n004(id_n, ds_n, kod_n, n_name, datebeg, dateend) VALUES( :id_n, :ds_n, :kod_n, :n_name, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      fOut:add_string('Обработка - ' + nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mID_n := read_xml_stroke_1251_to_utf8(oXmlNode, 'ID_N')
-          mDS_n := read_xml_stroke_1251_to_utf8(oXmlNode, 'DS_N')
-          mKod_n := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD_N')
-          mN_name := read_xml_stroke_1251_to_utf8(oXmlNode, 'N_NAME')
-          d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
+    fOut:add_string('Обработка - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mID_n := read_xml_stroke_1251_to_utf8(oXmlNode, 'ID_N')
+        mDS_n := read_xml_stroke_1251_to_utf8(oXmlNode, 'DS_N')
+        mKod_n := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD_N')
+        mN_name := read_xml_stroke_1251_to_utf8(oXmlNode, 'N_NAME')
+        d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
+        d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
 
-          if sqlite3_bind_int(stmt, 1, val(mID_n)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mDS_n) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, mKod_n) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, mN_name) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 5, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 6, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
+        count++
+        cmdTextInsert += 'INSERT INTO n004(id_n, ds_n, kod_n, n_name, datebeg, dateend) VALUES(' ;
+            + "" + mID_n + "," ;
+            + "'" + mDS_n + "'," ;
+            + "'" + mKod_n + "'," ;
+            + "'" + mN_name + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
         endif
-      next j
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
     endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
+    fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
   return nil
 
-// 12.05.22
+// 13.08.23
 function make_n005(db, source, fOut, fError)
   // ID_M,       "N",  4, 0 // Идентификатор M
   // DS_M,       "C",  5, 0 // Диагноз по МКБ
@@ -301,62 +325,68 @@ function make_n005(db, source, fOut, fError)
   // M_NAME,     "C",250, 0 // Расшифровка M для диагноза
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
-  local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
-  local oXmlDoc, oXmlNode, oNode1
+  local oXmlDoc, oXmlNode
   local mID_M, mDS_M, mKod_M, mM_name, d1, d2
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdTextInsert := textBeginTrans
 
   nameRef := 'N005.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор Metastasis (OnkM)')
   cmdText := 'CREATE TABLE n005(id_m INTEGER, ds_m TEXT(5), kod_m TEXT(5), m_name TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
+  stat_msg('Обработка файла: ' + nfile)  
+
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
-    cmdText := "INSERT INTO n005(id_m, ds_m, kod_m, m_name, datebeg, dateend) VALUES( :id_m, :ds_m, :kod_m, :m_name, :datebeg, :dateend )"
-    stmt := sqlite3_prepare(db, cmdText)
-    if ! Empty(stmt)
-      fOut:add_string('Обработка - ' + nfile)
-      k := Len( oXmlDoc:aItems[1]:aItems )
-      for j := 1 to k
-        oXmlNode := oXmlDoc:aItems[1]:aItems[j]
-        if 'ZAP' == upper(oXmlNode:title)
-          mID_m := read_xml_stroke_1251_to_utf8(oXmlNode, 'ID_M')
-          mDS_m := read_xml_stroke_1251_to_utf8(oXmlNode, 'DS_M')
-          mKod_m := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD_M')
-          mM_name := read_xml_stroke_1251_to_utf8(oXmlNode, 'M_NAME')
-          d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-          d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
+    fOut:add_string('Обработка - ' + nfile)
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mID_m := read_xml_stroke_1251_to_utf8(oXmlNode, 'ID_M')
+        mDS_m := read_xml_stroke_1251_to_utf8(oXmlNode, 'DS_M')
+        mKod_m := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD_M')
+        mM_name := read_xml_stroke_1251_to_utf8(oXmlNode, 'M_NAME')
+        d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
+        d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
 
-          if sqlite3_bind_int(stmt, 1, val(mID_m)) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 2, mDS_m) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 3, mKod_m) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 4, mM_name) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 5, d1) == SQLITE_OK .AND. ;
-            sqlite3_bind_text(stmt, 6, d2) == SQLITE_OK
-            if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
-            endif
-          endif
-          sqlite3_reset(stmt)
+        count++
+        cmdTextInsert += 'INSERT INTO n005(id_m, ds_m, kod_m, m_name, datebeg, dateend) VALUES(' ;
+            + "" + mID_m + "," ;
+            + "'" + mDS_m + "'," ;
+            + "'" + mKod_m + "'," ;
+            + "'" + mM_name + "'," ;
+            + "'" + d1 + "'," ;
+            + "'" + d2 + "');"
+        if count == COMMIT_COUNT
+          cmdTextInsert += textCommitTrans
+          sqlite3_exec(db, cmdTextInsert)
+          count := 0
+          cmdTextInsert := textBeginTrans
         endif
-      next j
+      endif
+    next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
     endif
-    sqlite3_clear_bindings(stmt)
-    sqlite3_finalize(stmt)
+    fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
   return nil
 
@@ -371,7 +401,7 @@ function make_n006(db, source, fOut, fError)
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -380,19 +410,19 @@ function make_n006(db, source, fOut, fError)
   nameRef := 'N006.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Справочник соответствия стадий TNM (OnkTNM)')
   cmdText := 'CREATE TABLE n006(id_gr INTEGER, ds_gr TEXT(5), id_st INTEGER, id_t INTEGER, id_n INTEGER, id_m INTEGER, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n006(id_gr, ds_gr, id_st, id_t, id_n, id_m, datebeg, dateend) VALUES( :id_gr, :ds_gr, :id_st, :id_t, :id_n, :id_m, :datebeg, :dateend )"
@@ -421,7 +451,7 @@ function make_n006(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 7, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 8, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -440,7 +470,7 @@ function make_n007(db, source, fOut, fError)
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -449,19 +479,19 @@ function make_n007(db, source, fOut, fError)
   nameRef := 'N007.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор гистологических признаков (OnkMrf)')
   cmdText := 'CREATE TABLE n007(id_mrf INTEGER, mrf_name TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n007(id_mrf, mrf_name, datebeg, dateend) VALUES( :id_mrf, :mrf_name, :datebeg, :dateend )"
@@ -482,7 +512,7 @@ function make_n007(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -502,7 +532,7 @@ function make_n008(db, source, fOut, fError)
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -511,19 +541,19 @@ function make_n008(db, source, fOut, fError)
   nameRef := 'N008.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор результатов гистологических исследований (OnkMrfRt)')
   cmdText := 'CREATE TABLE n008(id_r_m INTEGER, id_mrf INTEGER, r_m_name TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n008(id_r_m, id_mrf, r_m_name, datebeg, dateend) VALUES( :id_r_m, :id_mrf, :r_m_name, :datebeg, :dateend )"
@@ -546,7 +576,7 @@ function make_n008(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 4, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 5, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -566,7 +596,7 @@ function make_n009(db, source, fOut, fError)
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -575,19 +605,19 @@ function make_n009(db, source, fOut, fError)
   nameRef := 'N009.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор соответствия гистологических признаков диагнозам (OnkMrtDS)')
   cmdText := 'CREATE TABLE n009(id_m_d INTEGER, ds_mrf TEXT(3), id_mrf INTEGER, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n009(id_m_d, ds_mrf, id_mrf, datebeg, dateend) VALUES( :id_m_d, :ds_mrf, :id_mrf, :datebeg, :dateend )"
@@ -610,7 +640,7 @@ function make_n009(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 4, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 5, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -630,7 +660,7 @@ function make_n010(db, source, fOut, fError)
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -639,19 +669,19 @@ function make_n010(db, source, fOut, fError)
   nameRef := 'N010.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор маркеров (OnkIgh)')
   cmdText := 'CREATE TABLE n010(id_igh INTEGER, kod_igh TEXT, igh_name TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n010(id_igh, kod_igh, igh_name, datebeg, dateend) VALUES( :id_igh, :kod_igh, :igh_name, :datebeg, :dateend )"
@@ -674,7 +704,7 @@ function make_n010(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 4, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 5, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -695,7 +725,7 @@ function make_n011(db, source, fOut, fError)
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -704,19 +734,19 @@ function make_n011(db, source, fOut, fError)
   nameRef := 'N011.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор значений маркеров (OnkIghRt)')
   cmdText := 'CREATE TABLE n011(id_r_i INTEGER, id_igh INTEGER, kod_r_i TEXT, r_i_name TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n011(id_r_i, id_igh, kod_r_i, r_i_name, datebeg, dateend) VALUES( :id_r_i, :id_igh, :kod_r_i, :r_i_name, :datebeg, :dateend )"
@@ -741,7 +771,7 @@ function make_n011(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 5, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 6, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -761,7 +791,7 @@ function make_n012(db, source, fOut, fError)
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -770,19 +800,19 @@ function make_n012(db, source, fOut, fError)
   nameRef := 'N012.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор соответствия маркеров диагнозам (OnkIghDS)')
   cmdText := 'CREATE TABLE n012(id_i_d INTEGER, ds_igh TEXT(3), id_igh INTEGER, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n012(id_i_d, ds_igh, id_igh, datebeg, dateend) VALUES( :id_i_d, :ds_igh, :id_igh, :datebeg, :dateend )"
@@ -805,7 +835,7 @@ function make_n012(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 4, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 5, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -824,7 +854,7 @@ function make_n013(db, source, fOut, fError)
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -833,19 +863,19 @@ function make_n013(db, source, fOut, fError)
   nameRef := 'N013.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор типов лечения (OnkLech)')
   cmdText := 'CREATE TABLE n013(id_tlech INTEGER, tlech_name TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n013(id_tlech, tlech_name, datebeg, dateend) VALUES( :id_tlech, :tlech_name, :datebeg, :dateend )"
@@ -866,7 +896,7 @@ function make_n013(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -885,7 +915,7 @@ function make_n014(db, source, fOut, fError)
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -894,19 +924,19 @@ function make_n014(db, source, fOut, fError)
   nameRef := 'N014.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор типов хирургического лечения (OnkHir)')
   cmdText := 'CREATE TABLE n014(id_thir INTEGER, thir_name TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n014(id_thir, thir_name, datebeg, dateend) VALUES( :id_thir, :thir_name, :datebeg, :dateend )"
@@ -927,7 +957,7 @@ function make_n014(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -946,7 +976,7 @@ function make_n015(db, source, fOut, fError)
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -955,19 +985,19 @@ function make_n015(db, source, fOut, fError)
   nameRef := 'N015.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор линий лекарственной терапии (OnkLek_L)')
   cmdText := 'CREATE TABLE n015(id_tlek_l INTEGER, tlek_name_l TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n015(id_tlek_l, tlek_name_l, datebeg, dateend) VALUES( :id_tlek_l, :tlek_name_l, :datebeg, :dateend )"
@@ -988,7 +1018,7 @@ function make_n015(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -1007,7 +1037,7 @@ function make_n016(db, source, fOut, fError)
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -1016,19 +1046,19 @@ function make_n016(db, source, fOut, fError)
   nameRef := 'N016.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор циклов лекарственной терапии (OnkLek_V)')
   cmdText := 'CREATE TABLE n016(id_tlek_v INTEGER, tlek_name_v TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n016(id_tlek_v, tlek_name_v, datebeg, dateend) VALUES( :id_tlek_v, :tlek_name_v, :datebeg, :dateend )"
@@ -1049,7 +1079,7 @@ function make_n016(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -1068,7 +1098,7 @@ function make_n017(db, source, fOut, fError)
   // DATEBEG,    "D",  8, 0 // Дата начала действия записи
   // DATEEND,    "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -1077,19 +1107,19 @@ function make_n017(db, source, fOut, fError)
   nameRef := 'N017.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор типов лучевой терапии (OnkLuch)')
   cmdText := 'CREATE TABLE n017(id_tluch INTEGER, tluch_name TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n017(id_tluch, tluch_name, datebeg, dateend) VALUES( :id_tluch, :tluch_name, :datebeg, :dateend )"
@@ -1110,7 +1140,7 @@ function make_n017(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -1129,7 +1159,7 @@ function make_n018(db, source, fOut, fError)
   // DATEBEG,   "D",  8, 0 // Дата начала действия записи
   // DATEEND,   "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -1138,19 +1168,19 @@ function make_n018(db, source, fOut, fError)
   nameRef := 'N018.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор поводов обращения (OnkReas)')
   cmdText := 'CREATE TABLE n018(id_reas INTEGER, reas_name TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n018(id_reas, reas_name, datebeg, dateend) VALUES( :id_reas, :reas_name, :datebeg, :dateend )"
@@ -1171,7 +1201,7 @@ function make_n018(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -1190,7 +1220,7 @@ function make_n019(db, source, fOut, fError)
   // DATEBEG,   "D",  8, 0 // Дата начала действия записи
   // DATEEND,   "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -1199,19 +1229,19 @@ function make_n019(db, source, fOut, fError)
   nameRef := 'N019.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор целей консилиума (OnkCons)')
   cmdText := 'CREATE TABLE n019(id_cons INTEGER, cons_name TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n019(id_cons, cons_name, datebeg, dateend) VALUES( :id_cons, :cons_name, :datebeg, :dateend )"
@@ -1232,7 +1262,7 @@ function make_n019(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -1251,7 +1281,7 @@ function make_n020(db, source, fOut, fError)
   // DATEBEG,   "D",  8, 0 // Дата начала действия записи
   // DATEEND,   "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -1260,19 +1290,19 @@ function make_n020(db, source, fOut, fError)
   nameRef := 'N020.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор лекарственных препаратов, применяемых при проведении лекарственной терапии (OnkLekp)')
   cmdText := 'CREATE TABLE n020(id_lekp TEXT(6), mnn TEXT, datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n020(id_lekp, mnn, datebeg, dateend) VALUES( :id_lekp, :mnn, :datebeg, :dateend )"
@@ -1293,7 +1323,7 @@ function make_n020(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
@@ -1313,7 +1343,7 @@ function make_n021(db, source, fOut, fError)
   // DATEBEG,   "D",  8, 0 // Дата начала действия записи
   // DATEEND,   "D",  8, 0 // Дата окончания действия записи
   local stmt, stmtTMP
-  local cmdText, cmdTextTMP
+  local cmdText
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode, oNode1
@@ -1322,19 +1352,19 @@ function make_n021(db, source, fOut, fError)
   nameRef := 'N021.xml'
   nfile := source + nameRef
   if ! hb_vfExists(nfile)
-    out_error(FILE_NOT_EXIST, nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
     return nil
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор соответствия лекарственного препарата схеме лекарственной терапии (OnkLpsh)')
   cmdText := 'CREATE TABLE n021(id_zap INTEGER, code_sh TEXT(10), id_lekp TEXT(6), datebeg TEXT(10), dateend TEXT(10))'
-  if ! create_table(db, nameRef, cmdText)
+  if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
 
   oXmlDoc := HXMLDoc():Read(nfile)
   if Empty( oXmlDoc:aItems )
-    out_error(FILE_READ_ERROR, nfile)
+    out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
     cmdText := "INSERT INTO n021(id_zap, code_sh, id_lekp, datebeg, dateend) VALUES( :id_zap, :code_sh, :id_lekp, :datebeg, :dateend )"
@@ -1357,7 +1387,7 @@ function make_n021(db, source, fOut, fError)
             sqlite3_bind_text(stmt, 4, d1) == SQLITE_OK .AND. ;
             sqlite3_bind_text(stmt, 5, d2) == SQLITE_OK
             if sqlite3_step(stmt) != SQLITE_DONE
-              out_error(TAG_ROW_INVALID, nfile, j)
+              out_error(fError, TAG_ROW_INVALID, nfile, j)
             endif
           endif
           sqlite3_reset(stmt)
