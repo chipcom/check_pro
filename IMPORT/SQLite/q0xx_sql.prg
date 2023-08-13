@@ -77,7 +77,6 @@ function make_q015(db, source, fOut, fError)
     return nil
   else
     fOut:add_string('Обработка - ' + nfile)
-    // out_obrabotka(nfile)
     k := Len( oXmlDoc:aItems[1]:aItems )
     for j := 1 to k
       oXmlNode := oXmlDoc:aItems[1]:aItems[j]
@@ -122,7 +121,6 @@ function make_q015(db, source, fOut, fError)
     endif
     fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
-  // out_obrabotka_eol()
   return nil
 
 // 11.08.23
@@ -191,7 +189,6 @@ function make_q016(db, source, fOut, fError)
     return nil
   else
     fOut:add_string('Обработка - ' + nfile)
-    // out_obrabotka(nfile)
     k := Len( oXmlDoc:aItems[1]:aItems )
     for j := 1 to k
       oXmlNode := oXmlDoc:aItems[1]:aItems[j]
@@ -236,7 +233,6 @@ function make_q016(db, source, fOut, fError)
     endif
     fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
-  // out_obrabotka_eol()
   return nil
 
 // 11.08.23
@@ -286,7 +282,6 @@ function make_q017(db, source, fOut, fError)
     return nil
   else
     fOut:add_string('Обработка - ' + nfile)
-    // out_obrabotka(nfile)
     k := Len( oXmlDoc:aItems[1]:aItems )
     for j := 1 to k
       oXmlNode := oXmlDoc:aItems[1]:aItems[j]
@@ -323,5 +318,4 @@ function make_q017(db, source, fOut, fError)
     endif
     fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
-  // out_obrabotka_eol()
   return nil

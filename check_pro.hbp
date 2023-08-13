@@ -46,3 +46,7 @@ Errorsys.prg
 .\IMPORT\SQLite\o0xx_sql.prg
 .\IMPORT\SQLite\q0xx_sql.prg
 .\IMPORT\SQLite\v0xx_sql.prg
+.\IMPORT\SQLite\f0xx_sql.prg
+.\IMPORT\SQLite\mzdrav_sql.prg
+.\IMPORT\SQLite\other_sql.prg
+#.\IMPORT\SQLite\n0xx_sql.prg

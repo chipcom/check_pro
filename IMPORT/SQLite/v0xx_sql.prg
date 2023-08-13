@@ -109,7 +109,6 @@ Function make_V002(db, source, fOut, fError)
     endif
     fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
-  // out_obrabotka_eol()
   return nil
 
 // 11.08.23
@@ -195,7 +194,6 @@ Function make_V009(db, source, fOut, fError)
     endif
     fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
-  // out_obrabotka_eol()
   return nil
 
 // 11.08.23
@@ -1606,9 +1604,6 @@ Function make_V024(db, source, fOut, fError)
     out_error(fError, FILE_READ_ERROR, nfile)
     return nil
   else
-    // cmdText := "INSERT INTO v024 (iddkk, dkkname, datebeg, dateend) VALUES( :iddkk, :dkkname, :datebeg, :dateend )"
-    // stmt := sqlite3_prepare(db, cmdText)
-    // if ! Empty(stmt)
     fOut:add_string('Обработка - ' + nfile)
     k := Len( oXmlDoc:aItems[1]:aItems )
     for j := 1 to k
@@ -1624,16 +1619,6 @@ Function make_V024(db, source, fOut, fError)
         d1 := hb_ValToStr(d1_1)
         d2 := hb_ValToStr(d2_1)
 
-          // if sqlite3_bind_text(stmt, 1, mIDDKK) == SQLITE_OK .AND. ;
-          //   sqlite3_bind_text(stmt, 2, mDKKNAME) == SQLITE_OK .AND. ;
-          //   sqlite3_bind_text(stmt, 3, d1) == SQLITE_OK .AND. ;
-          //   sqlite3_bind_text(stmt, 4, d2) == SQLITE_OK
-          //   if sqlite3_step(stmt) != SQLITE_DONE
-          //     out_error(fError, TAG_ROW_INVALID, nfile, j)
-          //   endif
-          // endif
-          // sqlite3_reset(stmt)
-    // cmdText := "INSERT INTO v024 (iddkk, dkkname, datebeg, dateend) VALUES( :iddkk, :dkkname, :datebeg, :dateend )"
         count++
         cmdTextInsert += 'INSERT INTO v024(iddkk, dkkname, datebeg, dateend) VALUES(' ;
             + "'" + mIDDKK + "'," ;
@@ -1648,9 +1633,6 @@ Function make_V024(db, source, fOut, fError)
         endif
       endif
     next j
-    // endif
-    // sqlite3_clear_bindings(stmt)
-    // sqlite3_finalize(stmt)
     if count > 0
       cmdTextInsert += textCommitTrans
       sqlite3_exec(db, cmdTextInsert)

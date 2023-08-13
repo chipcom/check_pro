@@ -79,13 +79,13 @@ function run_sqlimport()
     sqlite3_exec(db, 'PRAGMA auto_vacuum=0')
     sqlite3_exec(db, 'PRAGMA page_size=4096')
 
-    make_V0xx(db, source, fOut, fError)
+    // make_V0xx(db, source, fOut, fError)
     // make_O0xx(db, source, fOut, fError)
     // make_Q0xx(db, source, fOut, fError)
 
     // make_F0xx(db, source, fOut, fError)
     // make_mzdrav(db, source, fOut, fError)
-    // make_other(db, source, fOut, fError)
+    make_other(db, source, fOut, fError)
 
     db := sqlite3_open_v2( nameDB, SQLITE_OPEN_READWRITE + SQLITE_OPEN_EXCLUSIVE )
     if ! Empty( db )

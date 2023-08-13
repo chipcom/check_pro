@@ -97,7 +97,6 @@ Function make_O001(db, source, fOut, fError)
     endif
     fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
-  // out_obrabotka_eol()
   return nil
 
 // 11.08.23
@@ -403,5 +402,4 @@ Function make_O002(db, source, fOut, fError)
     endif
     fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
-  // out_obrabotka_eol()
   return nil
