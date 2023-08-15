@@ -146,6 +146,20 @@ Function prog_menu(n_Task)
                      'ne_real()', ;
                      'ne_real()'})
   endcase
+  aadd(cmain_menu, 30)
+  aadd(main_menu,' ~Настройки ')
+  aadd(main_message,'Настройки')
+  aadd(first_menu, {'~Общие настройки',0, ;
+                    'Справочники ~ФФОМС',0, ;
+                    '~Рабочее место'} )
+  aadd(first_message, { ;
+      'Настройка конвертации файлов', ;
+      'Настройка содержимого справочников ФФОМС (уменьшение количества строк)', ;
+      'Настройка рабочего места';
+    } )
+  aadd(func_menu, {'nastr_convert_files()', ;
+                   'ne_real()', ;
+                   'ne_real()'} )
   // последнее меню для всех одно и то же
   // aadd(cmain_menu, maxcol() - 9)
   // aadd(main_menu,' Помо~щь ')
@@ -166,7 +180,7 @@ Function prog_menu(n_Task)
   //                     'Режим просмотра - кто находится в задаче и в каком режиме', ;
   //                     'Просмотр файла ошибок'})
   // // aadd(func_menu, {'file_Wordpad(exe_dir + cslash + 'README.RTF')', ;
-  // aadd(func_menu, {'view_file_in_Viewer(exe_dir + cslash + "README.RTF")', ;
+  // aadd(func_menu, {'view_file_in_Viewer(exe_dir + cslash + 'README.RTF')', ;
   //                 'm_help()', ;
   //                 'nastr_rab_mesto()', ;
   //                 'ust_printer(T_ROW)', ;

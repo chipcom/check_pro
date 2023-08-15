@@ -64,9 +64,9 @@ FUNCTION load_public()
        pict_cena := '9999999.99', forever := 'forever'
   PUBLIC yes_color := .t.
 
-  Public tmp_ini := cur_dir() + 'tmp' + sini
-  Public tools_ini := dir_server() + 'tools' + sini
-  Public local_tools_ini := cur_dir() + 'loctools' + sini
+  // Public app_ini := cur_dir() + 'check_pro' + sini
+  // Public tools_ini := dir_server() + 'tools' + sini
+  // Public local_tools_ini := cur_dir() + 'loctools' + sini
 
   PUBLIC color0, color1, cColorWait, cColorSt2Msg, cColorStMsg, ;
        cCalcMain, cHelpCMain, cColorText, ;
@@ -155,7 +155,7 @@ Function f_main(r0)
   r := int((maxrow() - r0 - len(arr1)) / 2) - 1
   c := int((maxcol() + 1 - lens) / 2) - 1
 
-  ar := GetIniSect(tmp_ini, 'task')
+  ar := GetIniSect(get_app_ini(), 'task')
   k := i := int(val(a2default(ar, 'current_task', lstr(X_SERVICE))))
   do while .t.
     if (i := popup_2array(arr1, r + r0, c, i, , , 'Выбор задачи', 'B+/W', 'N+/W, W+/N*')) == 0
@@ -169,7 +169,7 @@ Function f_main(r0)
     @ r0, 0 say full_date(sys_date) color 'W+/N' // перевывести дату
     @ r0, maxcol() - 4 say hour_min(seconds()) color 'W+/N' // перевывести время
   enddo
-  SetIniSect(tmp_ini, 'task', {{'current_task', lstr(k)}})
+  SetIniSect(get_app_ini(), 'task', {{'current_task', lstr(k)}})
   return NIL
 
 // вывести верхние строки главного экрана

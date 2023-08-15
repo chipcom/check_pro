@@ -31,6 +31,7 @@ cpru1251m.c
 check_pro.prg
 Errorsys.prg
 .\MENU\prog_menu.prg
+.\MENU\nastr_convert.prg
 .\SYSTEM\system.prg
 .\SYSTEM\extension.prg
 .\SYSTEM\use_func.prg

@@ -4,7 +4,7 @@
 #include 'tfile.ch'
 #include '.\dict_error.ch'
 
-// 13.08.23
+// 15.08.23
 function run_sqlimport()
   local source
   local destination
@@ -19,6 +19,7 @@ function run_sqlimport()
   local file, name_table, cFunc, cMask := '*.xml'
   local fError, fOut
   local buf := SaveScreen()
+  local ar
   local lOxx := .f.
   local lVxx := .f.
   local lQxx := .f.
@@ -26,27 +27,15 @@ function run_sqlimport()
   REQUEST HB_CODEPAGE_UTF8
   REQUEST HB_CODEPAGE_RU1251
   REQUEST HB_LANG_RU866
-  // HB_CDPSELECT('UTF8')
-
-  // @  8,  3 SAY 'Группа Oxx'
-  // @  8, 15 GET lOxx CHECKBOX COLOR 'W/B+,W/B,W+/R,W/G+' MESSAGE 'Группа Oxx?'
-  // @  9,  3 SAY 'Группа Vxx'
-  // @  9, 15 GET lVxx CHECKBOX COLOR 'W/B+,W/B,W+/R,W/G+' MESSAGE 'Группа Vxx?'
-  // @ 10,  3 SAY 'Группа Vxx'
-  // @ 10, 15 GET lVxx CHECKBOX COLOR 'W/B+,W/B,W+/R,W/G+' MESSAGE 'Группа Vxx?'
-
-  // READ  // MSG AT MaxRow(), 0, MaxCol() MSG COLOR 'W/B+'
-
-  // if LastKey() == K_ESC
-  //   return nil
-  // endif
 
   // waitStatus()
   fError := TFileText():New(cur_dir() + 'error.log', , .t., , .t.)
   fOut := TFileText():New(cur_dir() + 'output.log', , .t., , .t.)
 
-  // source := upper(beforatnum(os_sep, exename())) + os_sep
-  // destination := upper(beforatnum(os_sep, exename())) + os_sep
+  // ar := GetIniSect(get_app_ini(), group_ini)
+  // source := a2default(ar, 'source_path', '')
+  // destination := a2default(ar, 'destination_path', '')
+
   source := 'd:\_mo\tf_usl\in\'
   destination := cur_dir()
 

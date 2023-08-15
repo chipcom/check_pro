@@ -201,3 +201,6 @@ Function a2default(arr, name, sDefault)
   endif
   return s
 
+//
+function get_app_ini()
+  return cur_dir() + 'check_pro.ini'
