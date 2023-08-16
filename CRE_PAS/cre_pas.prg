@@ -30,6 +30,7 @@ function cre_pas(par)
     oBox:Save := .t.
     oBox:View()
 
+    SET CURSOR ON
     if par == 1
       @ 2, 1 TBOX oBox say 'Введите номер реестра' get n_reestr pict '999999'
     elseif par == 2
@@ -42,6 +43,7 @@ function cre_pas(par)
     @ 3, 24 TBOX oBox say ',' get a2 pict '99'
     @ 3, 28 TBOX oBox say ',' get a3 pict '99'
     read
+    SET CURSOR OFF
     if lastkey() == 27
       exit
     else
