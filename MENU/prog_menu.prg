@@ -142,7 +142,7 @@ Function prog_menu(n_Task)
         'Удаление истории болезни';
       } )
     aadd(func_menu, {'ne_real()', ;
-                     'run_sqlimport()', ;
+                     'run_ffomsimport()', ;
                      'ne_real()', ;
                      'ne_real()'})
   endcase

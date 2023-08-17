@@ -21,7 +21,7 @@ hbsqlit3.hbc
 -mt
 #-compr=yes
 -inc
--workdir=..\TEMP\CHECK_PRO
+-workdir=..\temp\check_pro
 
 -ocheck_pro
 
@@ -43,11 +43,11 @@ Errorsys.prg
 .\XML\xmlparse.c
 .\XML\hxmldoc.prg
 .\XML\xml_func.prg
-.\IMPORT\SQLite\sql_main.prg
-.\IMPORT\SQLite\o0xx_sql.prg
-.\IMPORT\SQLite\q0xx_sql.prg
-.\IMPORT\SQLite\v0xx_sql.prg
-.\IMPORT\SQLite\f0xx_sql.prg
-.\IMPORT\SQLite\mzdrav_sql.prg
-.\IMPORT\SQLite\other_sql.prg
-.\IMPORT\SQLite\n0xx_sql.prg
+.\IMPORT\FFOMS\ffoms_main.prg
+.\IMPORT\FFOMS\o0xx_sql.prg
+.\IMPORT\FFOMS\q0xx_sql.prg
+.\IMPORT\FFOMS\v0xx_sql.prg
+.\IMPORT\FFOMS\f0xx_sql.prg
+.\IMPORT\FFOMS\mzdrav_sql.prg
+.\IMPORT\FFOMS\other_sql.prg
+.\IMPORT\FFOMS\n0xx_sql.prg
