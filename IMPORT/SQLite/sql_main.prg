@@ -4,59 +4,59 @@
 #include 'tfile.ch'
 #include '.\dict_error.ch'
 
-// 15.08.23
+// 17.08.23
 function run_sqlimport()
   local source
   local destination
-  local lExists
   local os_sep := hb_osPathSeparator()
 
   local db
   local lCreateIfNotExist := .t.
   local nameDB
-  local lAll := .f.
-  local lUpdate := .f.
-  local file, name_table, cFunc, cMask := '*.xml'
   local fError, fOut
   local buf := SaveScreen()
   local ar
-  local lOxx := .f.
-  local lVxx := .f.
-  local lQxx := .f.
+  local group_ini := 'CONVERT_FILES'
+  local name_sql
 
   REQUEST HB_CODEPAGE_UTF8
   REQUEST HB_CODEPAGE_RU1251
   REQUEST HB_LANG_RU866
 
-  // waitStatus()
   fError := TFileText():New(cur_dir() + 'error.log', , .t., , .t.)
   fOut := TFileText():New(cur_dir() + 'output.log', , .t., , .t.)
 
-  // ar := GetIniSect(get_app_ini(), group_ini)
-  // source := a2default(ar, 'source_path', '')
-  // destination := a2default(ar, 'destination_path', '')
+  ar := GetIniSect(get_app_ini(), group_ini)
+  source := a2default(ar, 'source_path', '')
+  destination := a2default(ar, 'destination_path', '')
+  name_sql := a2default(ar, 'name_sql_db', 'chip_mo')
 
-  source := 'd:\_mo\tf_usl\in\'
-  destination := cur_dir()
+  // if ! hb_vfDirExists(source)
+  //   hb_Alert('Каталог "' + source + '" для исходных файлов не существует!')
+  //   return nil
+  // endif
 
-  if !(lExists := hb_vfDirExists( source ))
+  // if ! hb_vfDirExists(destination)
+  //   hb_Alert('Каталог "' + destination + '" для выходных файлов не существует!')
+  //   return nil
+  // endif
+
+  // source := 'd:\_mo\tf_usl\in\'
+
+  if !(hb_vfDirExists( source ))
     out_error(fError, DIR_IN_NOT_EXIST, source)
     return nil
   endi
 
-  if !(lExists := hb_vfDirExists( destination ))
+  if !(hb_vfDirExists( destination ))
     out_error(fError, DIR_OUT_NOT_EXIST, destination)
     return nil
   endi
 
   fOut:add_string(hb_eol() + 'Версия библиотеки SQLite3 - ' + sqlite3_libversion() + hb_eol())
 
-  // if sqlite3_libversion_number() < 3005001
-  //   return
-  // endif
-
   // nameDB := destination + 'chip_mo.db'
-  nameDB := destination + 'test.db'
+  nameDB := destination + name_sql + '.db'  // 'test.db'
   db := sqlite3_open(nameDB, lCreateIfNotExist)
 
   if ! Empty( db )
