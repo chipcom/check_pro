@@ -31,7 +31,7 @@ OID 1.2.643.5.1.13.13.11.1358.xml - Единицы измерения
 OID 1.2.643.5.1.13.13.11.1468.xml - Пути введения лекарственных препаратов
 */
 
-// 17.08.23
+// 18.08.23
 function run_ffomsimport()
   local source
   local destination
@@ -58,23 +58,18 @@ function run_ffomsimport()
   destination := a2default(ar, 'destination_path', '')
   name_sql := a2default(ar, 'name_sql_db', 'chip_mo')
 
-  // if ! hb_vfDirExists(source)
-  //   hb_Alert('Каталог "' + source + '" для исходных файлов не существует!')
-  //   return nil
-  // endif
-
-  // if ! hb_vfDirExists(destination)
-  //   hb_Alert('Каталог "' + destination + '" для выходных файлов не существует!')
-  //   return nil
-  // endif
-
-  // source := 'd:\_mo\tf_usl\in\'
+  if right(source, 1) != os_sep
+    source += os_sep
+  endif
 
   if !(hb_vfDirExists( source ))
     out_error(fError, DIR_IN_NOT_EXIST, source)
     return nil
   endi
 
+  if right(destination, 1) != os_sep
+    destination += os_sep
+  endif
   if !(hb_vfDirExists( destination ))
     out_error(fError, DIR_OUT_NOT_EXIST, destination)
     return nil

@@ -7,23 +7,26 @@
 #include 'tbox.ch'
 // #include 'chip_mo.ch'
 
-// 17.08.23 настройка конвертации файлов
+// 18.08.23 настройка конвертации файлов
 Function nastr_convert_files()
   Static group_ini := 'CONVERT_FILES'
   Local ar, mm_tmp := {}
   local source_dir := space(50), destination_dir := space(50)
   local name_db := space(20)
+  local work_year := space(4)
   local oBox := nil
 
   ar := GetIniSect(get_app_ini(), group_ini)
   source_dir := padr(a2default(ar, 'source_path', space(50)), 50)
   destination_dir := padr(a2default(ar, 'destination_path', space(50)), 50)
   name_db := padr(a2default(ar, 'name_sql_db', space(20)), 20)
+  work_year := padr(a2default(ar, 'work_year', space(4)), 4)
 
   mm_tmp := { ;
     {group_ini, 'source_path',   source_dir}, ;
     {group_ini, 'destination_path',   destination_dir}, ;
-    {group_ini, 'name_sql_db',   name_db} ;
+    {group_ini, 'name_sql_db',   name_db}, ;
+    {group_ini, 'work_year',   work_year} ;
   }
 
   oBox := TBox():New(10, 5, 20, 75, .t.)
@@ -35,17 +38,19 @@ Function nastr_convert_files()
   oBox:View()
 
   SET CURSOR ON
-  @ 2, 1 TBOX oBox say 'Исходный каталог:' get source_dir picture 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-  @ 3, 1 TBOX oBox say 'Выходной каталог:' get destination_dir picture 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-  @ 4, 1 TBOX oBox say 'Имя файла sql:' get name_db picture 'XXXXXXXXXXXXXXXXXXXX'
+  @ 2, 1 TBOX oBox say 'Рабочий год:' get work_year picture '9999'
+  @ 3, 1 TBOX oBox say 'Исходный каталог:' get source_dir picture 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+  @ 4, 1 TBOX oBox say 'Выходной каталог:' get destination_dir picture 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+  @ 5, 1 TBOX oBox say 'Имя файла sql:' get name_db picture 'XXXXXXXXXXXXXXXXXXXX'
   read
   SET CURSOR OFF
   if lastkey() != 27
     mm_tmp := { ;
               {group_ini, 'source_path', source_dir}, ;
               {group_ini, 'destination_path', destination_dir}, ;
-              {group_ini, 'name_sql_db', name_db} ;
-              }
+              {group_ini, 'name_sql_db', name_db}, ;
+              {group_ini, 'work_year',   work_year} ;
+            }
     SetIniVar(get_app_ini(), mm_tmp)
   endif
 

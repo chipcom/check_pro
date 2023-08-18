@@ -51,3 +51,6 @@ Errorsys.prg
 .\IMPORT\FFOMS\mzdrav_sql.prg
 .\IMPORT\FFOMS\other_sql.prg
 .\IMPORT\FFOMS\n0xx_sql.prg
+.\IMPORT\TFOMS\tfoms_main.prg
+.\IMPORT\TFOMS\dict_TFOMS.prg
+.\IMPORT\TFOMS\dict_dbf_func.prg
