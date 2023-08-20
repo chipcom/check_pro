@@ -40,7 +40,9 @@ function run_ffomsimport()
   local db
   local lCreateIfNotExist := .t.
   local nameDB
-  local fError, fOut
+  local t1, t2
+  local fError, nSizeError
+  local fOut, nSizeOut
   local buf := SaveScreen()
   local ar
   local group_ini := 'CONVERT_FILES'
@@ -52,6 +54,7 @@ function run_ffomsimport()
 
   fError := TFileText():New(cur_dir() + 'error.log', , .t., , .t.)
   fOut := TFileText():New(cur_dir() + 'output.log', , .t., , .t.)
+  t1 := seconds()
 
   ar := GetIniSect(get_app_ini(), group_ini)
   source := a2default(ar, 'source_path', '')
@@ -109,5 +112,23 @@ function run_ffomsimport()
     endif
   endif
 
+  t2 := seconds() - t1
+
+  if t2 > 0
+    fOut:add_string('Время конвертации - ' + sectotime(t2) + hb_eol())
+  endif
+
+  nSizeError := fError:Size()
+  nSizeOut := fOut:Size()
+  fError := nil
+  fOut := nil
+
+  if nSizeError > 0
+    viewtext(cur_dir() + 'error.log', , , , .t., , , 2)
+  endif
+  if nSizeOut > 0
+    viewtext(cur_dir() + 'output.log', , , , .t., , , 2)
+  endif
+  
   RestScreen(buf)
   return nil

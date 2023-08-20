@@ -27,14 +27,13 @@
 #include 'function.ch'
 #include 'tfile.ch'
 #include '.\dict_error.ch'
-//#include 'settings.ch'
 
 // 18.08.23
 // вернуть префикс справочного файла для года
 function prefixFileNameForYear(work_year)
   return '_mo' + substr(work_year, 4, 1)
 
-// 19.08.23
+// 20.08.23
 function run_tfomsimport()
   // Local _mo_usl := { ;
   //   {'SHIFR',      'C',     10,      0}, ;
@@ -74,8 +73,8 @@ function run_tfomsimport()
   // local fp
   local i, s
   local t1, t2
-  local fError
-  local fOut
+  local fError, nSizeError
+  local fOut, nSizeOut
   local ar
   local group_ini := 'CONVERT_FILES'
   local work_year
@@ -85,10 +84,6 @@ function run_tfomsimport()
   // Public sys_year := year(date()) // 2021 // year(date())
 
   t1 := seconds()
-
-  // source := upper(beforatnum(os_sep, exename())) + os_sep
-  // destination := upper(beforatnum(os_sep, exename())) + os_sep
-  // current_dir := upper(beforatnum(os_sep, exename())) + os_sep
 
   ar := GetIniSect(get_app_ini(), group_ini)
   source := a2default(ar, 'source_path', '')
@@ -284,11 +279,23 @@ function run_tfomsimport()
   HB_VFERASE(destination + 't006_d.dbf')
   HB_VFERASE(destination + 't006_u.dbf')
 
-  // t2 := seconds() - t1
+  t2 := seconds() - t1
 
-  // if t2 > 0
-  //   OutStd( 'Время конвертации - ' + sectotime(t2) + hb_eol() )
-  // endif
+  if t2 > 0
+    fOut:add_string('Время конвертации - ' + sectotime(t2) + hb_eol())
+  endif
+
+  nSizeError := fError:Size()
+  nSizeOut := fOut:Size()
+  fError := nil
+  fOut := nil
+
+  if nSizeError > 0
+    viewtext(cur_dir() + 'error.log', , , , .t., , , 2)
+  endif
+  if nSizeOut > 0
+    viewtext(cur_dir() + 'output.log', , , , .t., , , 2)
+  endif
 
   return nil
 
