@@ -7,8 +7,9 @@
 // 11.08.23
 function make_O0xx(db, source, fOut, fError)
 
-  make_O001(db, source, fOut, fError)
-  make_O002(db, source, fOut, fError)
+  // make_O001(db, source, fOut, fError)
+  // make_O002(db, source, fOut, fError)
+  make_O002_dbf(db, source, fOut, fError, 'd:\_mo\chip\work_check\')
   return nil
 
 // 11.08.23
@@ -402,4 +403,101 @@ Function make_O002(db, source, fOut, fError)
     endif
     fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
+  return nil
+
+// 24.08.23
+Function make_O002_dbf(db, source, fOut, fError, destination)
+  Local _mo_okato := { ;
+    {'TER',      'C',      2,      0}, ;
+    {'KOD1',     'C',      3,      0}, ;
+    {'KOD2',     'C',      3,      0}, ;
+    {'KOD3',     'C',      3,      0}, ;
+    {'RAZDEL',   'C',      1,      0}, ;
+    {'NAME1',    'C',    122,      0}, ;
+    {'CENTRUM',  'C',    114,      0}, ;
+    {'N8',       'C',    103,      0}, ;
+    {'N9',       'C',     27,      0}, ;
+    {'N10',      'C',     27,      0}, ;
+    {'N11',      'C',     27,      0}, ;
+    {'N12',      'C',     24,      0}, ;
+    {'N13',      'C',     28,      0}, ;
+    {'N14',      'C',     21,      0}, ;
+    {'N15',      'C',      3,      0}, ;
+    {'N16',      'C',      1,      0}, ;
+    {'N17',      'C',     10,      0}, ;
+    {'N18',      'C',     10,      0} ;
+  }
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mTer, mName1, mKod1, mKod2, mKod3, mRazdel
+  local mOKATO, mFl_zagol := 0, mTip := 0, mFl_vibor := 0, mSelo := 0
+  local valKod1 := 0, valKod2 := 0
+  local mCentrum, aTemp
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdSeloText := textBeginTrans
+  local count18 := 0, cmdSelo18 := textBeginTrans
+  local countRegion := 0, cmdRegionText := textBeginTrans
+  local countCity := 0, cmdCityText := textBeginTrans
+  local countCity18 := 0, cmdCity18 := textBeginTrans
+  local nameFile := 'okato'
+
+  // cmdText := 'CREATE TABLE _okator(okato TEXT(2), name TEXT(72))'
+
+  nameRef := 'O002.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Общероссийский классификатор административно-территориального деления (OKATO)')
+  endif
+
+  stat_msg('Обработка файла: ' + nfile)  
+
+  dbcreate(destination + nameFile, _mo_okato)
+  use (destination + nameFile) new alias OKATO
+
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Обработка - ' + nfile + hb_eol())
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mTer := read_xml_stroke_1251_to_utf8(oXmlNode, 'TER')
+        mKod1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD1')
+        mKod2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD2')
+        mKod3 := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD3')
+        mRazdel := read_xml_stroke_1251_to_utf8(oXmlNode, 'RAZDEL')
+        mName1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'NAME1')
+        mCentrum := read_xml_stroke_1251_to_utf8(oXmlNode, 'CENTRUM')
+        if mTer == '00' .and. mKod1 == '000' .and. mKod2 == '000' .and. mKod3 == '000'
+          loop
+        endif
+        
+        OKATO->(dbappend())
+        if len(alltrim(mTer)) < 2
+          OKATO->TER := padl(alltrim(mTer), 2, '0')
+        else
+          OKATO->TER   := mTer
+        endif
+        OKATO->KOD1   := iif(alltrim(mKod1) == '0', '000', mKod1)
+        OKATO->KOD2    := iif(alltrim(mKod2) == '0', '000', mKod2)
+        OKATO->KOD3    := iif(alltrim(mKod3) == '0', '000', mKod3)
+
+        OKATO->RAZDEL    := mRazdel
+        OKATO->NAME1 := mName1
+        OKATO->CENTRUM := mCentrum
+      endif
+    next j
+    fOut:add_string('Обработано ' + str(j) + ' узлов.' + hb_eol() )
+  endif
+  OKATO->(dbCloseArea())
   return nil
