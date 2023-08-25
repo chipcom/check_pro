@@ -9,7 +9,8 @@ function make_O0xx(db, source, fOut, fError)
 
   // make_O001(db, source, fOut, fError)
   // make_O002(db, source, fOut, fError)
-  make_O002_dbf(db, source, fOut, fError, 'd:\_mo\chip\work_check\')
+  // make_O002_dbf(db, source, fOut, fError, 'd:\_mo\chip\work_check\')
+  make_O002_new(db, source, fOut, fError)
   return nil
 
 // 11.08.23
@@ -413,20 +414,15 @@ Function make_O002_dbf(db, source, fOut, fError, destination)
     {'KOD2',     'C',      3,      0}, ;
     {'KOD3',     'C',      3,      0}, ;
     {'RAZDEL',   'C',      1,      0}, ;
-    {'NAME1',    'C',    122,      0}, ;
-    {'CENTRUM',  'C',    114,      0}, ;
-    {'N8',       'C',    103,      0}, ;
-    {'N9',       'C',     27,      0}, ;
-    {'N10',      'C',     27,      0}, ;
-    {'N11',      'C',     27,      0}, ;
-    {'N12',      'C',     24,      0}, ;
-    {'N13',      'C',     28,      0}, ;
-    {'N14',      'C',     21,      0}, ;
-    {'N15',      'C',      3,      0}, ;
-    {'N16',      'C',      1,      0}, ;
-    {'N17',      'C',     10,      0}, ;
-    {'N18',      'C',     10,      0} ;
+    {'NAME1',    'C',    250,      0}, ;
+    {'CENTRUM',  'C',     80,      0} ;
   }
+    // {'NOMDESCR', 'C',    250,      0}, ;
+    // {'N9',       'C',     27,      0}, ;
+    // {'NOMAKT',   'N',      3,      0}, ;
+    // {'STATUS',   'N',     20,      0}, ;
+    // {'DATEUTV',  'D',      8,      0}, ;
+    // {'DATEVVED', 'D',      8,      0} ;
   local cmdText
   local k, j
   local nfile, nameRef
@@ -501,3 +497,112 @@ Function make_O002_dbf(db, source, fOut, fError, destination)
   endif
   OKATO->(dbCloseArea())
   return nil
+
+// 25.08.23
+Function make_O002_new(db, source, fOut, fError)
+  // Таблица А.42 O002 Общероссийский классификатор административно-территориального деления (ОКАТО) <**>
+
+  // Идентификатор	Тип	Размер	Содержание
+  // TER	            C	    2	  Код территории
+  // KOD1	            C	    3	  Код района/города
+  // KOD2	            C	    3	  Код РП/сельсовета
+  // KOD3	            C   	3	  Код сельского населенного пункта
+  // RAZDEL	          C	    1 	Код раздела
+  // NAME1	          C	  250 	Наименование
+  // CENTRUM	        C	   80 	Дополнительные данные
+  // NOMDESCR	        C	  250 	Описание (пояснение) может содержать до 8000 символов
+  // NOMAKT	          N	    3	  Номер последнего изменения
+  // STATUS	          N	 20,5 	Тип последнего изменения (фактически - 1 символ перед запятой), где:
+  //   1 - аннулировать;
+  //   2 - изменить реквизит, кроме кода;
+  //   3 - включить;
+  //   0 - начальная загрузка
+  // DATEUTV	        D	   10 	Дата принятия изменения по позиции
+  // DATEVVED	        D	   10 	Дата введения в действие изменения по позиции
+
+  local cmdText
+  local k, j
+  local nfile, nameRef
+  local oXmlDoc, oXmlNode
+  local mTer, mName1, mKod1, mKod2, mKod3, mRazdel
+  local mOKATO, mFl_zagol := 0, mTip := 0, mFl_vibor := 0, mSelo := 0
+  local valKod1 := 0, valKod2 := 0
+  local mCentrum, aTemp
+  local textBeginTrans := 'BEGIN TRANSACTION;'
+  local textCommitTrans := 'COMMIT;'
+  local count := 0, cmdSeloText := textBeginTrans
+  local count18 := 0, cmdSelo18 := textBeginTrans
+  local countRegion := 0, cmdRegionText := textBeginTrans
+  local countCity := 0, cmdCityText := textBeginTrans
+  local countCity18 := 0, cmdCity18 := textBeginTrans
+
+  nameRef := 'O002.xml'
+  nfile := source + nameRef
+  if ! hb_vfExists(nfile)
+    out_error(fError, FILE_NOT_EXIST, nfile)
+    return nil
+  else
+    fOut:add_string(hb_eol() + nameRef + ' - Общероссийский классификатор административно-территориального деления (OKATO)')
+  endif
+
+  stat_msg('Обработка файла: ' + nfile)  
+
+  oXmlDoc := HXMLDoc():Read(nfile)
+  if Empty( oXmlDoc:aItems )
+    out_error(fError, FILE_READ_ERROR, nfile)
+    return nil
+  else
+    fOut:add_string('Обработка - ' + nfile + hb_eol())
+    cmdText := 'CREATE TABLE okato (okato TEXT(11), ter TEXT(2), kod1 TEXT(3), kod2 TEXT(3), kod3 TEXT(3), razdel TEXT(1), name1 TEXT(250))'
+    if sqlite3_exec(db, 'DROP TABLE if EXISTS okato') == SQLITE_OK
+      fOut:add_string('DROP TABLE okato - Ok')
+    endif
+    if sqlite3_exec(db, cmdText) == SQLITE_OK
+      fOut:add_string('CREATE TABLE okato - Ok')
+    else
+      fOut:add_string('CREATE TABLE okato - False')
+      return nil
+    endif
+
+    k := Len( oXmlDoc:aItems[1]:aItems )
+    for j := 1 to k
+      oXmlNode := oXmlDoc:aItems[1]:aItems[j]
+      if 'ZAP' == upper(oXmlNode:title)
+        mTer := read_xml_stroke_1251_to_utf8(oXmlNode, 'TER')
+        mKod1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD1')
+        mKod2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD2')
+        mKod3 := read_xml_stroke_1251_to_utf8(oXmlNode, 'KOD3')
+        mRazdel := read_xml_stroke_1251_to_utf8(oXmlNode, 'RAZDEL')
+        mName1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'NAME1')
+
+        if mTer == '00' .and. mKod1 == '000' .and. mKod2 == '000' .and. mKod3 == '000'
+          loop
+        endif
+
+        count++
+        mOKATO  := mTer + mKod1 + mKod2 + mKod3
+        cmdSeloText += 'INSERT INTO okato (okato, ter, kod1, kod2, kod3, razdel, name1) VALUES(' ;
+            + "'" + mOKATO +"'," ;
+            + "'" + mTer + "'," ;
+            + "'" + mKod1 + "'," ;
+            + "'" + mKod2 + "'," ;
+            + "'" + mKod3 + "'," ;
+            + "'" + mRazdel + "'," ;
+            + "'" + mName1 + "');"
+        if count == COMMIT_COUNT
+          cmdSeloText += textCommitTrans
+          sqlite3_exec(db, cmdSeloText)
+          count := 0
+          cmdSeloText := textBeginTrans
+        endif
+
+      endif
+    next j
+    if count > 0
+      cmdSeloText += textCommitTrans
+      sqlite3_exec(db, cmdSeloText)
+    endif
+    fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
+  endif
+  return nil
+
