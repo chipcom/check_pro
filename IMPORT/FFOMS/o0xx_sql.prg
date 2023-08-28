@@ -7,10 +7,10 @@
 // 11.08.23
 function make_O0xx(db, source, fOut, fError)
 
-  // make_O001(db, source, fOut, fError)
+  make_O001(db, source, fOut, fError)
   // make_O002(db, source, fOut, fError)
   // make_O002_dbf(db, source, fOut, fError, 'd:\_mo\chip\work_check\')
-  make_O002_new(db, source, fOut, fError)
+  // make_O002_new(db, source, fOut, fError)
   return nil
 
 // 11.08.23
