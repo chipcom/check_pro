@@ -819,7 +819,7 @@ function make_n011(db, source, fOut, fError)
   endif
   return nil
 
-// 12.08.23
+// 28.08.23
 function make_n012(db, source, fOut, fError)
   // ID_I_D,     "N",  2, 0 // Идентификатор строки
   // DS_Igh,     "C",  3, 0 // Диагноз по МКБ
@@ -881,6 +881,11 @@ function make_n012(db, source, fOut, fError)
         endif
       endif
     next j
+    if count > 0
+      cmdTextInsert += textCommitTrans
+      sqlite3_exec(db, cmdTextInsert)
+    endif
+    fOut:add_string('Обработано ' + str(k) + ' узлов.' + hb_eol() )
   endif
   return nil
 
