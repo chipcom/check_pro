@@ -232,18 +232,18 @@ function unit_Index(val_year, exe_dir, cur_dir)
   return nil
 
 // 09.03.23
-function shema_index(val_year, exe_dir, cur_dir)
-  local sbase
-  local file_index
+// function shema_index(val_year, exe_dir, cur_dir)
+//   local sbase
+//   local file_index
 
-  sbase := prefixFileRefName(val_year) + 'shema'  // 
-  if hb_vfExists(exe_dir + sbase + sdbf)
-    file_index := cur_dir + sbase + sntx
-    R_Use(exe_dir + sbase )
-    index on KOD to (cur_dir + sbase) // по коду критерия
-    use
-  endif
-  return nil
+//   sbase := prefixFileRefName(val_year) + 'shema'  // 
+//   if hb_vfExists(exe_dir + sbase + sdbf)
+//     file_index := cur_dir + sbase + sntx
+//     R_Use(exe_dir + sbase )
+//     index on KOD to (cur_dir + sbase) // по коду критерия
+//     use
+//   endif
+//   return nil
 
 // 14.07.23
 function k006_index(val_year, exe_dir, cur_dir)

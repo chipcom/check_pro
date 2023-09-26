@@ -19,7 +19,7 @@ function make_V0xx(db, source, fOut, fError)
   make_V020(db, source, fOut, fError)
   make_V021(db, source, fOut, fError)
   make_V022(db, source, fOut, fError)
-  // // make_V024(db, source)
+  make_V024(db, source, fOut, fError)
   make_V025(db, source, fOut, fError)
   make_V030(db, source, fOut, fError)
   make_V031(db, source, fOut, fError)
@@ -1561,7 +1561,7 @@ Function make_V036(db, source, fOut, fError)
   endif
   return nil
 
-// 12.08.23
+// 26.09.23
 Function make_V024(db, source, fOut, fError)
   // IDDKK,     "C",  10,      0  //  Идентификатор модели пациента
   // DKKNAME,   "C", 255,      0  // Наименование модели пациента
@@ -1584,7 +1584,7 @@ Function make_V024(db, source, fOut, fError)
     return nil
   endif
 
-  cmdText := 'CREATE TABLE v024(iddkk TEXT(10), dkkname TEXT, datebeg TEXT(10), dateend TEXT(10))'
+  cmdText := 'CREATE TABLE v024(iddkk TEXT(10), dkkname BLOB, datebeg TEXT(19), dateend TEXT(19))'
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор классификационных критериев (DopKr)')
 
   stat_msg('Обработка файла: ' + nfile)  
@@ -1612,12 +1612,19 @@ Function make_V024(db, source, fOut, fError)
         mIDDKK := read_xml_stroke_1251_to_utf8(oXmlNode, 'IDDKK')
         mDKKNAME := read_xml_stroke_1251_to_utf8(oXmlNode, 'DKKNAME')
 
+        // Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        // d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        // d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        // Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        // d1 := hb_ValToStr(d1_1)
+        // d2 := hb_ValToStr(d2_1)
+
         Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
         d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
         d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
         Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
-        d1 := hb_ValToStr(d1_1)
-        d2 := hb_ValToStr(d2_1)
+        d1 := iif(empty(d1_1), '', hb_ValToStr(d1_1) + ' 00:00:00')
+        d2 := iif(empty(d2_1), '2222-01-01 00:00:00', hb_ValToStr(d2_1) + ' 00:00:00')
 
         count++
         cmdTextInsert += 'INSERT INTO v024(iddkk, dkkname, datebeg, dateend) VALUES(' ;
