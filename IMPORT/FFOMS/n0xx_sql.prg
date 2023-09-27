@@ -1,6 +1,7 @@
 // Справочники федерального фонда медицинского страхования РФ типа N0xx
 
 #include 'function.ch'
+#include 'common.ch'
 #include '.\dict_error.ch'
 
 #require 'hbsqlit3'
@@ -1368,7 +1369,7 @@ function make_n020(db, source, fOut, fError)
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode
-  local mID_lekp, mMNN, d1, d2
+  local mID_lekp, mMNN, d1, d2, d1_1, d2_1
   local textBeginTrans := 'BEGIN TRANSACTION;'
   local textCommitTrans := 'COMMIT;'
   local count := 0, cmdTextInsert := textBeginTrans
@@ -1381,7 +1382,7 @@ function make_n020(db, source, fOut, fError)
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор лекарственных препаратов, применяемых при проведении лекарственной терапии (OnkLekp)')
-  cmdText := 'CREATE TABLE n020(id_lekp TEXT(6), mnn TEXT, datebeg TEXT(10), dateend TEXT(10))'
+  cmdText := 'CREATE TABLE n020(id_lekp TEXT(6), mnn TEXT, datebeg TEXT(19), dateend TEXT(19))'
   if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
@@ -1400,8 +1401,15 @@ function make_n020(db, source, fOut, fError)
       if 'ZAP' == upper(oXmlNode:title)
         mID_lekp := read_xml_stroke_1251_to_utf8(oXmlNode, 'ID_LEKP')
         mMNN := read_xml_stroke_1251_to_utf8(oXmlNode, 'MNN')
-        d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-        d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
+        // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
+        // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := iif(empty(d1_1), '', hb_ValToStr(d1_1) + ' 00:00:00')
+        d2 := iif(empty(d2_1), '2222-01-01 00:00:00', hb_ValToStr(d2_1) + ' 00:00:00')
 
         count++
         cmdTextInsert += 'INSERT INTO n020(id_lekp, mnn, datebeg, dateend) VALUES(' ;
@@ -1425,7 +1433,7 @@ function make_n020(db, source, fOut, fError)
   endif
   return nil
 
-// 12.08.23
+// 27.09.23
 function make_n021(db, source, fOut, fError)
   // ID_ZAP,    "N",  4, 0 // Идентификатор записи (в описании Char 15)
   // CODE_SH,   "C", 10, 0 // Код схемы лекарственной терапии
@@ -1436,7 +1444,7 @@ function make_n021(db, source, fOut, fError)
   local k, j
   local nfile, nameRef
   local oXmlDoc, oXmlNode
-  local mID_zap, mCode_sh, mID_lekp, d1, d2
+  local mID_zap, mCode_sh, mID_lekp, d1, d2, d1_1, d2_1
   local textBeginTrans := 'BEGIN TRANSACTION;'
   local textCommitTrans := 'COMMIT;'
   local count := 0, cmdTextInsert := textBeginTrans
@@ -1449,7 +1457,7 @@ function make_n021(db, source, fOut, fError)
   endif
 
   fOut:add_string(hb_eol() + nameRef + ' - Классификатор соответствия лекарственного препарата схеме лекарственной терапии (OnkLpsh)')
-  cmdText := 'CREATE TABLE n021(id_zap INTEGER, code_sh TEXT(10), id_lekp TEXT(6), datebeg TEXT(10), dateend TEXT(10))'
+  cmdText := 'CREATE TABLE n021(id_zap INTEGER, code_sh TEXT(10), id_lekp TEXT(6), datebeg TEXT(19), dateend TEXT(19))'
   if ! create_table(db, nameref, cmdText, fOut, fError)
     return nil
   endif
@@ -1469,8 +1477,15 @@ function make_n021(db, source, fOut, fError)
         mID_zap := read_xml_stroke_1251_to_utf8(oXmlNode, 'ID_ZAP')
         mCode_sh := read_xml_stroke_1251_to_utf8(oXmlNode, 'CODE_SH')
         mId_lekp := read_xml_stroke_1251_to_utf8(oXmlNode, 'ID_LEKP')
-        d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
-        d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
+        // d1 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG')
+        // d2 := read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND')
+
+        Set( _SET_DATEFORMAT, 'dd.mm.yyyy' )
+        d1_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEBEG'))
+        d2_1 := ctod(read_xml_stroke_1251_to_utf8(oXmlNode, 'DATEEND'))
+        Set( _SET_DATEFORMAT, 'yyyy-mm-dd' )
+        d1 := iif(empty(d1_1), '', hb_ValToStr(d1_1) + ' 00:00:00')
+        d2 := iif(empty(d2_1), '2222-01-01 00:00:00', hb_ValToStr(d2_1) + ' 00:00:00')
 
         count++
         cmdTextInsert += 'INSERT INTO n021(id_zap, code_sh, id_lekp, datebeg, dateend) VALUES(' ;
